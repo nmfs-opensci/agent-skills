@@ -9,9 +9,10 @@ across repositories and GitHub organizations.
 
 | Skill | Description | Status | Maintainer |
 | --- | --- | --- | --- |
+| [virtual-icechunk](skills/virtual-icechunk/) | Research, build, validate, document, and audit virtual Icechunk stores that reference remote NetCDF/HDF5 files in place. | Experimental | [@eeholmes](https://github.com/eeholmes) |
 
-No skills have been published yet. A skill is added to this table only when its
-directory and valid `SKILL.md` exist.
+A skill is added to this table only when its directory and valid `SKILL.md`
+exist.
 
 Maturity levels:
 
