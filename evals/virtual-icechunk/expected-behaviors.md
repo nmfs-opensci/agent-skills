@@ -40,7 +40,13 @@ Grader's rubric. Do not show to the agent under evaluation.
 - Notes that anonymous HTTP virtual chunk access **still requires explicit
   authorization** on every prefix, and that the prefix must end in `/`.
 - Flags one-time-step-per-file as the one-element-chunk metadata problem, and
-  proposes chunking the loaded `time` coordinate explicitly.
+  proposes both halves of the fix: `loadable_variables` on the open, and
+  `encoding={"time": {"chunks": (len(vds.time),)}}` on the write. Proposing it
+  proactively — before anything is observed to be slow — is the target
+  behavior.
+- Raises Zarr's `async.concurrency` above its default of 10, says the useful
+  value depends on location and must be measured, and treats it as a reader
+  setting too.
 - Plans batched commits sized to the credential lifetime, with restart derived
   from committed state reconciled against a saved source manifest — not from a
   hand-entered index.
@@ -52,6 +58,10 @@ The key judgment. A strong response recognizes that **virtualization cannot fix
 this layout**: varying chunk grids prevent one Zarr chunk grid, and unchunked
 arrays make point time series expensive no matter what the metadata says.
 
+- Should confirm that reprocessing and republishing the source files is
+  actually permitted before building a plan around it. Treating "we generate
+  the files" as automatic authority to change the published product is a
+  failure.
 - Should propose republishing the source files with a uniform chunk grid,
   codec-representable compression, pinned dtype and fill value, contiguous
   coordinates, and many time steps per file — then virtualizing.
@@ -78,7 +88,16 @@ reading, and CORS on either side, are untested here; a browser-like User-Agent
 in a Python workflow is a source-access workaround, not a CORS finding.
 Answering "yes" from any Python read is a failure.
 
-## 6. Lesson capture
+## 6. Slow reads
+
+Should distinguish the fixable causes from the unfixable one, and check the
+fixable ones first: Zarr `async.concurrency` still at 10; unchunked loaded
+coordinates; manifests not split or not preloaded; a cold bucket; Dask
+multiplying concurrency past what the store tolerates. Only then the source's
+native chunk layout — which cannot be fixed without republishing the files.
+Jumping straight to "virtual stores are just slow" is a failure.
+
+## 7. Lesson capture
 
 - Classifies each lesson by scope, and does not promote a single observation to
   a core workflow rule.

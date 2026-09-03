@@ -1,9 +1,15 @@
 # Designing source files that virtualize cleanly
 
-Use this when you control the source files, or can republish them — for example
-producing NetCDF for NOAA Open Data Dissemination (NODD) that a virtual Icechunk
-store will later reference. Getting the file layout right at this stage is the
-only chance to fix chunking, because virtualization copies no data.
+**Being able to change the source files is the exception, not the norm.**
+Usually the files belong to a provider and their layout is a hard constraint.
+This reference applies in the uncommon case where you produce the files
+yourself, or the data owner has explicitly cleared you to reprocess and
+republish them — for example producing NetCDF for NOAA Open Data Dissemination
+(NODD) that a virtual Icechunk store will later reference. Confirm you have that
+permission before proposing it; do not assume it.
+
+When you do have it, take it seriously: getting the layout right here is the
+only chance to fix chunking at all, because virtualization copies no data.
 
 Reference implementation: RFROM v2.3 for NODD —
 <https://github.com/nmfs-opensci/gobai-rfrom-icechunks/blob/main/RFROMV/prep-one-netcdf-for-NODD.ipynb>

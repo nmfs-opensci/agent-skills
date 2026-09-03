@@ -48,6 +48,9 @@ at the marked boundaries. Steps 1–7 involve no destination credentials at all.
    vds.vz.to_icechunk(session, encoding={"time": {"chunks": (len(vds.time),)}})
    ```
 
+   Do this on every multi-file build, not only when metadata reads have already
+   become slow — see `performance-tuning.md`.
+
 10. **Write and commit a recoverable unit.** Record the snapshot ID and the
     manifest position it corresponds to, then open a fresh writable session.
 
@@ -71,26 +74,17 @@ store = repo.reopen(authorize_virtual_chunk_access=auth).readonly_session("main"
 ds = xr.open_zarr(store, consolidated=False, chunks={})
 ```
 
+Readers should raise `zarr.config.set({"async.concurrency": 128})` too; it is
+not a writer-only setting (`performance-tuning.md`).
+
 `HttpAccess` is right for anonymous HTTPS sources. An S3-backed source needs the
 matching S3 credential type instead, and the reader needs credentials the writer
 never had to think about. Use `chunks={}` when you will concatenate groups, so
 nothing materializes eagerly; `chunks=None` gives NumPy on access.
 
-## Manifest splitting
+## Performance
 
-For large time series, split Icechunk manifests so metadata reads stay fast:
-
-```python
-config.manifest = icechunk.ManifestConfig(
-    splitting=icechunk.ManifestSplittingConfig.from_dict(
-        {icechunk.ManifestSplitCondition.AnyArray():
-            {icechunk.ManifestSplitDimCondition.DimensionName("time"): 100}}
-    )
-)
-config.manifest.max_concurrent_manifest_fetches_during_commit = 16
-```
-
-**Experimental tuning, not a constant.** 100 time chunks per manifest split and
-16 concurrent fetches are a reasonable starting point that has been used on
-several large builds. They partition Icechunk metadata; they do not rechunk
-source data. Record what you used and why.
+Before timing anything, raise Zarr's async concurrency — the default of 10 is
+the most common cause of a store that "feels slow". Manifest splitting,
+preloading, and the concurrency interaction with Dask are all in
+`performance-tuning.md`.

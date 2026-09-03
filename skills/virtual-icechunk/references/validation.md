@@ -45,8 +45,10 @@ opens cleanly over broken references is a common and misleading result.
 ## Performance
 
 Record performance; do not assert a threshold. Virtual read speed is bounded by
-the source's native chunking, which you cannot change. Capture, with package
-versions, compute region, cold or warm cache, and concurrency:
+the source's native chunking, which you cannot change — but first make sure you
+are not simply measuring Zarr's default `async.concurrency` of 10
+(`performance-tuning.md`). Capture, with package versions, compute region, cold
+or warm cache, and the concurrency settings used:
 
 1. metadata-only open;
 2. one native chunk;

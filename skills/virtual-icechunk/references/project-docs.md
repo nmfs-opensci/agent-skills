@@ -24,7 +24,9 @@ State plainly:
 - **A representative read**, with lazy-loading guidance — `chunks={}` before
   concatenating groups, `chunks=None` for direct NumPy access.
 - **Source chunk limitations and observed performance**, including any access
-  pattern that is expensive because of the native layout.
+  pattern that is expensive because of the native layout, and the
+  `zarr.config.set({"async.concurrency": ...})` value the timings were measured
+  with. Readers need that setting as much as the writer did.
 - **Provenance**: build notebook or script, source manifest, snapshot ID or tag,
   and the update date.
 - **Anything unverified**, explicitly. Browser support in particular must not be

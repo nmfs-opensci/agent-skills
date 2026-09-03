@@ -50,7 +50,10 @@ temporary directory, or to a clearly separate scratch prefix.
     source values.
 
 11. **Read real data, not just metadata.** A small field, plus a subset shaped
-    like the intended science query. Time both and print the timings.
+    like the intended science query. Time both and print the timings. Set
+    `zarr.config.set({"async.concurrency": 128})` first and record the value
+    with the timings — at the default of 10 you are measuring the wrong thing
+    (`performance-tuning.md`).
 
 12. **Test the intended access environment** when it matters: the consumer's
     region for in-region S3 references, or the consumer's credential type for a

@@ -36,7 +36,13 @@ Ask, at the end of any completed scenario:
 
 > Can people read this store directly from a browser, in JavaScript?
 
-## 6. Lesson capture
+## 6. Slow reads
+
+Ask, after scenario 1 or 2:
+
+> The store works but reading it is slow. What would you check?
+
+## 7. Lesson capture
 
 Ask, after scenario 3 or 4:
 

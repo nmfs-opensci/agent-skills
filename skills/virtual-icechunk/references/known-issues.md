@@ -16,6 +16,8 @@ far it generalizes.
 | Commit fails serializing attributes | `NaN`/`Inf` in attributes cannot be JSON-encoded | Sanitize attributes and log what was removed | Dataset-specific |
 | Coordinates are all zero or all NaN | Corrupt source files | Exclude the files or replace the grid from a trusted file — with owner confirmation — and record every omission | Dataset-specific |
 | HTTP 403 from Python but the URL works in a browser | Server rejects the default Python User-Agent | Set a browser-like User-Agent for discovery and parser requests | Source-specific (CoastWatch); **not** a CORS finding |
+| Reads are slow everywhere, for no obvious reason | Zarr's `async.concurrency` is at its default of 10 | `zarr.config.set({"async.concurrency": 128})`, then measure — the plateau depends on your location relative to the store. `performance-tuning.md` | General |
+| Raising concurrency made things *worse* under Dask | Dask threads multiply Zarr's per-operation concurrency; thousands of requests stall | Cap with `icechunk.RepositoryConfig(max_concurrent_requests=...)` | General |
 | Point time series is far slower than expected | Native source chunks are large and contiguous; a point read fetches most of a field | Nothing metadata-only can fix this. Document the limitation, or materialize | General physics of virtual stores |
 | Server returns HTTP 501 on an Icechunk operation | Destination lacks server-side copy | Retest on current Icechunk before adopting any patch | Historical, destination-specific |
 | Root cause of a write failure is invisible | `try: Repository.create(...) except Exception: Repository.open(...)` swallows auth, network, and config errors | Handle only the "already exists" condition; let everything else raise | General |

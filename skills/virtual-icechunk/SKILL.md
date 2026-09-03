@@ -52,9 +52,20 @@ arrays, one time step per file with a pathological coordinate, or codecs Zarr
 cannot represent — a virtual store will be correct but slow, and no metadata
 setting will fix it.
 
-When you control or can republish the source files, fixing them first is often
-the better engineering: see `references/source-file-design.md`. When you do not,
-say plainly what the performance consequence will be and let the owner choose.
+Usually you cannot do anything about it: the files belong to the provider. Say
+plainly what the performance consequence will be, and let the owner choose.
+
+Occasionally — and it is genuinely the exception — you produce the files, or the
+data owner has explicitly cleared you to reprocess and republish them. Then
+fixing the layout first is much better engineering than virtualizing a bad one,
+because that is the only chance to fix chunking at all. Ask before assuming you
+have that permission. See `references/source-file-design.md`.
+
+Separately, before concluding that anything is slow, check
+`references/performance-tuning.md`. Zarr's default `async.concurrency` is 10,
+which under-uses object storage badly, and a store built without chunking its
+loaded coordinates will have slow metadata reads no matter what the source
+looks like. Both are fixable; the source layout is not.
 
 ## Non-negotiables
 
@@ -92,5 +103,21 @@ and a Python workaround is not evidence about browsers.
 
 Read `references/known-issues.md` before debugging anything. The most common:
 missing virtual authorization, an unsaved config, a prefix without a trailing
-`/`, a reused session after commit, expired destination credentials mid-build,
-and one-element coordinate chunks making metadata reads unbearably slow.
+`/`, a reused session after commit, and expired destination credentials
+mid-build.
+
+Two performance traps have bitten these builds repeatedly, and both are cheap to
+avoid up front rather than diagnose later (`references/performance-tuning.md`):
+
+```python
+# 1. Materialize the coordinates, then write the combine coordinate as ONE chunk.
+#    Without this, one-time-step-per-file sources give one inline chunk per
+#    timestamp and metadata reads crawl.
+vds = open_virtual_mfdataset(urls, loadable_variables=["time", "lat", "lon"], ...)
+vds.vz.to_icechunk(session, encoding={"time": {"chunks": (len(vds.time),)}})
+
+# 2. Zarr's default concurrency is 10. Raise it, for writers AND readers, then
+#    measure — the plateau depends on where you are relative to the store.
+import zarr
+zarr.config.set({"async.concurrency": 128})
+```
