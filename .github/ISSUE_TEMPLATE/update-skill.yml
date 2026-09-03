@@ -1,0 +1,46 @@
+name: Update skill
+description: Propose a correction or improvement to an existing skill
+title: "[Update skill]: "
+labels:
+  - update-skill
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Skill name
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Current problem
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or observed failure
+    validations:
+      required: true
+  - type: textarea
+    id: upstream
+    attributes:
+      label: Relevant upstream change
+      description: Link current official documentation when applicable.
+  - type: textarea
+    id: adjustment
+    attributes:
+      label: Proposed adjustment
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Backward-compatibility concerns
+  - type: textarea
+    id: evaluation
+    attributes:
+      label: Evaluation scenario
+      description: Describe a realistic request and observable expected behavior.
+    validations:
+      required: true

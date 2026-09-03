@@ -1,0 +1,57 @@
+name: New skill
+description: Propose a reusable skill for the shared catalog
+title: "[New skill]: "
+labels:
+  - new-skill
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Proposed skill name
+      description: Use a lowercase, hyphenated name.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Problem or repeated workflow
+    validations:
+      required: true
+  - type: textarea
+    id: requests
+    attributes:
+      label: Example user requests
+      description: Give a few realistic prompts.
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Existing examples or repositories
+  - type: textarea
+    id: outputs
+    attributes:
+      label: Expected outputs
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Known constraints
+  - type: dropdown
+    id: maturity
+    attributes:
+      label: Proposed maturity level
+      options:
+        - Experimental
+        - Provisional
+        - Stable
+    validations:
+      required: true
+  - type: input
+    id: maintainer
+    attributes:
+      label: Maintainer
+      description: GitHub username or team.
+    validations:
+      required: true
