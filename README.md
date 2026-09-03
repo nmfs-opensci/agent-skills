@@ -49,12 +49,15 @@ used across projects. Installed copies are not the canonical source.
 Select a skill directory, then copy or link the complete directory into the
 current skill location documented by the agent:
 
-- **GitHub Copilot CLI:** use a repository or personal skills directory
-  supported by Copilot.
-- **Claude Code:** install into the documented project or personal skills
-  directory.
-- **Codex:** install into the documented repository, user, or administrator
-  skills directory.
+- **GitHub Copilot CLI:** copy into `.github/skills/`, `.claude/skills/`, or
+  `.agents/skills/` in a repository, or `~/.copilot/skills/` or
+  `~/.agents/skills/` for personal use. Copilot CLI also provides
+  `copilot skill add`.
+- **Claude Code:** use `.claude/skills/` in a project or `~/.claude/skills/`
+  for personal skills.
+- **Codex:** use `.agents/skills/` in a repository or `~/.agents/skills/` for
+  personal skills. Older `$CODEX_HOME/skills` installations remain supported
+  but are deprecated as a user-skill location.
 
 Installation commands, discovery locations, and agent support can change.
 Before installing, check the current official documentation for

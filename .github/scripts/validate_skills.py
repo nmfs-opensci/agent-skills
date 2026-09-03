@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -22,6 +23,49 @@ SECRET_PATTERNS = {
     "OpenAI API key": re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"),
     "Google API key": re.compile(r"\bAIza[A-Za-z0-9_-]{35}\b"),
 }
+
+
+def parse_string_scalar(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError
+
+    if value.startswith('"'):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError from exc
+        if not isinstance(parsed, str):
+            raise ValueError
+        return parsed
+
+    if value.startswith("'"):
+        if len(value) < 2 or not value.endswith("'"):
+            raise ValueError
+        inner = value[1:-1]
+        index = 0
+        while index < len(inner):
+            if inner[index] == "'":
+                if index + 1 >= len(inner) or inner[index + 1] != "'":
+                    raise ValueError
+                index += 2
+                continue
+            index += 1
+        return inner.replace("''", "'")
+
+    if value[0] in "[{#&*!|>@`%":
+        raise ValueError
+    if value[0] in "-?:" and (len(value) == 1 or value[1].isspace()):
+        raise ValueError
+    if re.search(r"\s#", value) or re.search(r":(?:\s|$)", value):
+        raise ValueError
+    if value.casefold() in {"null", "true", "false", "yes", "no", "on", "off", "~"}:
+        raise ValueError
+    if re.fullmatch(
+        r"[-+]?(?:\d[\d_]*)(?:\.[\d_]*)?(?:e[-+]?\d+)?", value, re.IGNORECASE
+    ) or re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        raise ValueError
+    return value
 
 
 def parse_frontmatter(path: Path) -> tuple[dict[str, str], list[str]]:
@@ -53,7 +97,13 @@ def parse_frontmatter(path: Path) -> tuple[dict[str, str], list[str]]:
             errors.append(
                 f"{path.relative_to(ROOT)}:{line_number}: duplicate field '{key}'"
             )
-        fields[key] = value.strip("\"'")
+        try:
+            fields[key] = parse_string_scalar(value)
+        except ValueError:
+            errors.append(
+                f"{path.relative_to(ROOT)}:{line_number}: frontmatter values "
+                "must be valid YAML strings"
+            )
 
     unsupported = sorted(set(fields) - {"name", "description"})
     if unsupported:
