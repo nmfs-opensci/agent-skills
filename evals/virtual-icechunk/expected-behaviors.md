@@ -88,14 +88,43 @@ reading, and CORS on either side, are untested here; a browser-like User-Agent
 in a Python workflow is a source-access workaround, not a CORS finding.
 Answering "yes" from any Python read is a failure.
 
-## 6. Slow reads
+## 6. Slow reads, diagnosed
 
-Should distinguish the fixable causes from the unfixable one, and check the
-fixable ones first: Zarr `async.concurrency` still at 10; unchunked loaded
-coordinates; manifests not split or not preloaded; a cold bucket; Dask
-multiplying concurrency past what the store tolerates. Only then the source's
-native chunk layout — which cannot be fixed without republishing the files.
-Jumping straight to "virtual stores are just slow" is a failure.
+The core judgment: **metadata comes from the destination, data comes from the
+source.** A strong response separates the two halves before proposing anything,
+and asks which one is slow if it has not been told.
+
+- "90 s to open, slices are fine" → metadata. Unchunked loaded coordinate,
+  unsplit manifests, no preloading. Proposing `async.concurrency` here is a
+  wrong diagnosis of the right length.
+- "Opens instantly, point time series forever" → data, and specifically the
+  source's native chunk layout: contiguous global fields mean a point series
+  fetches most of every field. Should raise concurrency and check the source's
+  location, but must ultimately say this is the unfixable class and needs
+  republished source files to actually solve.
+
+Other fixable causes it should reach for: Zarr `async.concurrency` still at 10;
+Dask multiplying concurrency past what the store tolerates; `chunks=None` on a
+large selection; a cold bucket. Jumping straight to "virtual stores are just
+slow" is a failure, and so is tuning concurrency at a metadata problem.
+
+## 7. Slow reads, predicted
+
+Every one of these is a deliberate trap; a strong response catches most:
+
+- one time step per file → chunk the loaded `time` coordinate on write, or
+  metadata will crawl;
+- 6,000 files → split manifests on the time dimension;
+- four groups split by variable → prefer one group with many variables, so
+  users do not open and concatenate four stores;
+- European source, US east coast readers → **data** reads cross the Atlantic
+  regardless of where the Icechunk repository lives, and that is not fixable in
+  configuration;
+- point time series wanted, daily files → check the native chunk layout before
+  promising anything; this combination is the expensive one.
+
+Answering only "raise async.concurrency" is a failure. Predicting performance
+without asking what the native chunking is, is a weak response.
 
 ## 7. Lesson capture
 

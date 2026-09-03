@@ -23,6 +23,7 @@ from an unverified pattern.
 | Understand a new dataset before coding | **Research & plan** | `references/research-and-plan.md` |
 | Build a new virtual store | **Create** | plan → smoke test → production → docs |
 | Review or modernize an existing workflow | **Audit** | `references/audit.md` |
+| Ask why a store is slow, or whether one will be | **Diagnose** | `references/performance-tuning.md` |
 | Capture what a finished job taught | **Learn** | `references/learn-and-evolve.md` |
 
 ## Create: the required order
@@ -61,11 +62,21 @@ fixing the layout first is much better engineering than virtualizing a bad one,
 because that is the only chance to fix chunking at all. Ask before assuming you
 have that permission. See `references/source-file-design.md`.
 
-Separately, before concluding that anything is slow, check
-`references/performance-tuning.md`. Zarr's default `async.concurrency` is 10,
-which under-uses object storage badly, and a store built without chunking its
-loaded coordinates will have slow metadata reads no matter what the source
-looks like. Both are fixable; the source layout is not.
+## Slow reads
+
+"Why is this slow?" and "will this be slow?" are common asks, and the answers
+are usually build-time decisions that were free to get right and are expensive
+to undo. Bad ones have made metadata reads crawl and data loads several times
+slower than necessary. `references/performance-tuning.md` is the playbook for
+both diagnosing an existing store and reviewing a plan before it is built.
+
+The one thing to internalize: in a virtual store, **metadata comes from the
+destination and data comes from the source** — two different hosts, two
+unrelated sets of causes. Work out which half is slow before changing anything.
+
+Raise this proactively. When planning a build, when reviewing someone else's
+plan, and when validating, flag the decisions in that reference's design table
+rather than waiting for a complaint.
 
 ## Non-negotiables
 

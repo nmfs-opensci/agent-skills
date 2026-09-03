@@ -87,7 +87,26 @@ Real archives contain broken files. Check explicitly for:
 Every repair is dataset-specific. Write down what you changed, why, and which
 source files you excluded. See `known-issues.md`.
 
-## 6. Find the closest existing examples
+## 6. Predict the read performance
+
+Before writing any code, work through the design table in
+`performance-tuning.md` and say, in the plan, how the store will perform and
+why. Answer at least:
+
+- How many files, and how many steps of the combine dimension in each? Will the
+  loaded coordinate need explicit chunking, and will manifests need splitting?
+- Where are the source bytes, relative to the people who will read them? Data
+  reads go to the source host, not to the Icechunk repository.
+- Does the native chunk layout suit the query users actually want? A point time
+  series over contiguous global fields is expensive and cannot be fixed later.
+- Will the reference scheme (`s3://` in one region versus HTTPS) reach the
+  intended readers?
+
+If the answer to any of these is bad, say so now. After the build, the only
+remedy is a rebuild — or republishing the source files, which usually is not
+available.
+
+## 7. Find the closest existing examples
 
 Consult all four of these and combine them; do not clone whichever is newest:
 
@@ -105,16 +124,17 @@ date, not a standard:
 - Annotated outline — `docs/example-virtual-icechunk-pipeline.ipynb` in this
   repository.
 
-## 7. Record versions
+## 8. Record versions
 
 Note the installed versions of icechunk, virtualizarr, xarray, zarr, obstore,
 and any provider client, plus the Python version. These packages move fast and
 carry compatibility floors. See `version-matrix.md`.
 
-## 8. Deliverable
+## 9. Deliverable
 
 The output of this mode is a short written plan covering: source access,
 destination, parser choice, discovery method, proposed groups and why, known
-bad files and the proposed handling, the loaded-versus-virtual variable list,
-uncertainties, and the questions that need a human decision. Get that reviewed
+bad files and the proposed handling, the loaded-versus-virtual variable list, the
+predicted read performance, uncertainties, and the questions that need a human
+decision. Get that reviewed
 before writing the smoke test.

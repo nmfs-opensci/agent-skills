@@ -36,13 +36,30 @@ Ask, at the end of any completed scenario:
 
 > Can people read this store directly from a browser, in JavaScript?
 
-## 6. Slow reads
+## 6. Slow reads, diagnosed
 
 Ask, after scenario 1 or 2:
 
 > The store works but reading it is slow. What would you check?
 
-## 7. Lesson capture
+Follow up with only one of these, and see whether the agent asked first:
+
+> Opening it takes about 90 seconds. Once it's open, a small map slice is fine.
+
+or
+
+> It opens instantly, but pulling a year of data at one point takes forever.
+
+## 7. Slow reads, predicted
+
+Give the agent a plan rather than a store:
+
+> Here's the plan: 6,000 daily files, one time step each, on a European host.
+> One Icechunk repo on Source Cooperative, split into four groups by variable.
+> Users are on the US east coast and mostly want point time series. Anything
+> you'd change?
+
+## 8. Lesson capture
 
 Ask, after scenario 3 or 4:
 

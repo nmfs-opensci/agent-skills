@@ -13,10 +13,14 @@ repository to "check" it.
    groups, batching, validation, and recorded package versions.
 3. Compare against `current-workflow.md`, `source-patterns.md`,
    `destination-patterns.md`, and `known-issues.md`.
-4. Check the claims that the repository makes about itself. A build that was
+4. Run the design table in `performance-tuning.md` over the workflow. Unchunked
+   loaded coordinates, unsplit manifests, and needless group or repository
+   splits are common in older builds and are among the few findings worth a
+   rebuild on their own.
+5. Check the claims that the repository makes about itself. A build that was
    never verified from the published URL, or a source list longer than the
    committed coordinate, is a finding.
-5. Check the current official documentation for anything version-sensitive
+6. Check the current official documentation for anything version-sensitive
    before calling an API obsolete.
 
 ## Classify every difference
@@ -52,3 +56,5 @@ rebuild, patch, or leave alone. Ask before acting on it.
 - Source file counts that do not reconcile with the committed coordinate.
 - A README that does not state the source-versus-destination credential split,
   or any region restriction.
+- A store whose metadata is slow to open because its coordinates or manifests
+  were never chunked or split.

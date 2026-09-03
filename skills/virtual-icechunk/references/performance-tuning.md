@@ -1,80 +1,111 @@
-# Performance tuning
+# Read performance: diagnose and prevent
 
-Two different things limit a virtual store, and they have different fixes:
+Use this when asked why a store is slow, whether a store *will* be slow, or to
+review a plan before it is built. Slow reads are the most common complaint about
+virtual stores, and most of the causes are decisions made at build time that
+cost nothing to get right and are expensive to fix afterwards.
 
-- **The source's native chunk layout.** Unfixable without republishing the files
-  (`source-file-design.md`). Measure it, document it, do not promise it away.
-- **Concurrency and metadata layout.** Very fixable, and easy to leave at
-  defaults that are far too conservative. Everything below is in this category.
+Reference: <https://icechunk.io/en/v2.2.0/guides/performance/>
 
-Check these against the Icechunk performance guide for your installed version:
-<https://icechunk.io/en/v2.2.0/guides/performance/>
+## The mental model
 
-## Zarr async concurrency — check this first
+In a virtual store, **metadata and data come from two different hosts**:
 
-Zarr's default is **10 concurrent requests**, which badly under-uses object
-storage. Reads that feel mysteriously slow are usually this.
+| Read | Goes to | Slow because |
+|---|---|---|
+| Opening the store, listing variables, coordinates | The **destination** — the Icechunk repository | Manifest size and layout, coordinate chunking |
+| Actual science values | The **source** — the provider's NetCDF/HDF5 files | Native chunk layout, source location, concurrency |
 
-```python
-import zarr
-zarr.config.get("async.concurrency")        # -> 10 (default)
-zarr.config.set({"async.concurrency": 128})
-```
+Establish which one is slow before doing anything else. They share almost no
+causes, and the fixes are unrelated. A materialized Zarr store has one host;
+this is the thing that makes virtual stores different to reason about.
 
-- The limit is **per individual Zarr array read/write operation**, not global.
-- 128 is Icechunk's suggested value for a large machine close to object
-  storage. The useful ceiling depends on where you are relative to the store and
-  on the source service — a cross-region HTTPS source will plateau much sooner
-  than in-region S3. **Measure it for your location** rather than copying a
-  number; try a few values on a representative read and record what you used.
-- This is a reader-side setting as much as a writer-side one. Put it in the
-  project README and the loading example, not just in the build script.
+## Triage, cheapest first
 
-## Icechunk's global request cap
+1. **Time the two halves separately.** Time `xr.open_zarr(...)` on its own, then
+   time one small data read. Metadata-slow and data-slow are different problems.
 
-Each repository caps its own concurrent requests, default **256**:
+2. **Check Zarr's concurrency.** The default is 10, which badly under-uses
+   object storage. This alone accounts for multiples, not percentages.
 
-```python
-config = icechunk.RepositoryConfig(max_concurrent_requests=10)
-repo = icechunk.Repository.open(storage=storage, config=config)
-```
+   ```python
+   import zarr
+   zarr.config.get("async.concurrency")        # -> 10 (default)
+   zarr.config.set({"async.concurrency": 128})
+   ```
 
-Lower it when something downstream is generating too much concurrency.
+   The limit is **per individual Zarr array read/write operation**. 128 suits a
+   large machine close to object storage; the useful ceiling depends on your
+   location relative to the *source* and on what that service tolerates.
+   Measure two or three values on a representative read rather than copying a
+   number, and record what you used. This is a **reader** setting as much as a
+   writer one — it belongs in the README and the loading example.
 
-## Dask multiplies concurrency
+3. **Check the coordinate chunking** if metadata is the slow half. See below.
 
-Dask threads or workers sit above Zarr's per-operation limit, so if each task
-touches several chunks the concurrency multiplies. Thousands of in-flight HTTP
-requests stall or time out. If you raise `async.concurrency` and things get
-*worse* under Dask, that is the interaction — cap it with
-`max_concurrent_requests` rather than hunting for a network fault.
+4. **Check where the source is relative to the reader.** Data bytes come from
+   the provider, so a store whose repository is in `us-east-1` but whose
+   references point at a European host will have slow data reads from anywhere.
+   Nothing in the Icechunk configuration changes this.
+
+5. **Check manifest splitting and preloading** for a large time series.
+
+6. **Check Dask.** Dask threads or workers sit above Zarr's per-operation limit,
+   so if each task touches several chunks the concurrency multiplies. Thousands
+   of in-flight requests stall or time out. If raising `async.concurrency` made
+   things *worse*, this is why — cap it:
+
+   ```python
+   config = icechunk.RepositoryConfig(max_concurrent_requests=10)  # default 256
+   repo = icechunk.Repository.open(storage=storage, config=config)
+   ```
+
+7. **Check the reader's own call.** `chunks={}` gives Dask arrays with the
+   backend's preferred chunks — use it before concatenating groups. `chunks=None`
+   gives no Dask, and a large selection materializes as NumPy on access.
+
+8. **Check whether the bucket is cold.** Object stores reshard based on observed
+   load, so a new bucket or repository is measurably slower until it warms. Do
+   not benchmark a first run on a fresh bucket.
+
+9. **Only then, the source's native chunk layout.** This is the one cause you
+   cannot configure away — see "Unfixable" below.
+
+## Design decisions that cause slow reads
+
+Flag these during Research & plan, and when reviewing someone else's plan. Each
+has produced a real problem in these builds.
+
+| Decision | Consequence | Do instead |
+|---|---|---|
+| Appending one-time-step files without chunking the loaded coordinate | One inline chunk per timestamp; metadata reads crawl at scale | Chunk the combine coordinate on write (below) |
+| No manifest splitting on a long time series | One enormous manifest fetched on open | Split on the combine dimension |
+| Lazily loading manifests for a store users open repeatedly for one small read | First-read latency every time | Configure preloading |
+| Splitting into many groups or repositories when one would do | Users open and concatenate several stores | Prefer one repository, one group, many variables |
+| References pointing at a host far from the intended readers | Every data read crosses a region or an ocean | Choose the reference scheme deliberately; document the restriction |
+| In-region `s3://` references | Fast in that region, slow or unusable outside | Decide consciously; consider HTTPS for reach |
+| Loading more than the coordinates | Materializes data that should have stayed virtual | Keep `loadable_variables` minimal |
+| Publishing timings without the concurrency setting and region | Nobody can reproduce or interpret them | Record both |
 
 ## Chunk the loaded coordinates
 
-The single most common metadata-performance mistake in these builds. Sources
-with one time step per file produce one inline chunk per timestamp, and metadata
-reads become unbearable at scale.
+The single most common metadata-performance mistake here. Do it on **every**
+multi-file build, proactively — not after someone reports that opening the store
+takes minutes.
 
 ```python
 vds = open_virtual_mfdataset(urls, loadable_variables=["time", "lat", "lon"], ...)
 vds.vz.to_icechunk(session, encoding={"time": {"chunks": (len(vds.time),)}})
 ```
 
-Both halves matter:
+Both halves matter. `loadable_variables` materializes the coordinates so the
+science arrays stay virtual — without it there is no coordinate array to chunk.
+The `encoding` writes the whole time coordinate as **one** chunk instead of
+thousands. It changes only the materialized coordinate; it does **not** rechunk
+the virtual science data, and nothing can. Apply the same reasoning to any other
+coordinate you load.
 
-- `loadable_variables` materializes the coordinates — the science arrays stay
-  virtual. Without it you cannot combine, and without it there is no coordinate
-  array to chunk.
-- The `encoding` writes the whole time coordinate as **one** chunk instead of
-  thousands. This changes only the materialized coordinate. It does **not**
-  rechunk the virtual science data, and nothing can.
-
-Do this on every build with many files, not only when it has already become
-slow. Apply the same reasoning to any other coordinate you load.
-
-## Manifest splitting
-
-For large time series, split Icechunk manifests so metadata stays manageable:
+## Manifest splitting and preloading
 
 ```python
 config.manifest = icechunk.ManifestConfig(
@@ -88,26 +119,30 @@ config.manifest.max_concurrent_manifest_fetches_during_commit = 16
 
 **Experimental tuning, not a constant.** 100 time chunks per split and 16
 concurrent fetches are a reasonable starting point used on several large builds.
-They partition Icechunk metadata; they do not rechunk source data. Record what
-you used and why.
+They partition Icechunk metadata; they do not rechunk source data.
 
-## Manifest preloading
-
-Manifests load lazily, so the first read of an array pays the manifest fetch.
+Manifests load lazily, so the first read of an array pays the fetch.
 `ManifestPreloadConfig` with a `ManifestPreloadCondition` (`name_matches`,
-`path_matches`, combined with `and_conditions`/`or_conditions`) loads matching
-manifests when a session opens, trading memory for lower first-read latency.
-Worth considering for a store whose users repeatedly open it for one small read.
+`path_matches`, combined via `and_conditions`/`or_conditions`) loads matching
+manifests when a session opens — memory for lower first-read latency.
 
-## Cold buckets
+## Unfixable: the source's native chunk layout
 
-Object stores reshard based on observed load, so a brand-new bucket or
-repository can be measurably slower than the same store once it is warm. Do not
-draw conclusions from a first-run benchmark on a fresh bucket.
+Virtualization preserves source chunks exactly. If a daily global field is
+stored contiguously, a one-point time series must fetch most of every field, and
+no Icechunk or Zarr setting changes that. Chunks that are too small make request
+overhead dominate; chunks that are too large over-fetch.
 
-## What to record
+When you hit this, say so plainly rather than tuning around it. The only real
+fix is republishing the source files, which is usually not available — see
+`source-file-design.md` for the exceptional case where it is.
 
-Whatever you tune, write the values into the README alongside the timings in
-`validation.md`: `async.concurrency`, any `max_concurrent_requests`, the
-manifest split settings, and the region the numbers were measured from. A timing
-without its concurrency setting and location is not interpretable.
+## Reporting a diagnosis
+
+Say which half is slow, what you measured, what you changed, and what the
+remaining floor is. Quantify against a baseline where you can: "metadata open
+went from 90 s to 2 s by chunking the time coordinate; data reads are 4× faster
+at `async.concurrency=128`; the point time series is still slow and cannot be
+fixed without republishing the source files." Record the numbers with package
+versions, region, cold or warm cache, and concurrency settings, per
+`validation.md`.
