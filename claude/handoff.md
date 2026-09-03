@@ -16,6 +16,11 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
 - `docs/virtual-icechunk-patterns.md` is the prior provisional analysis of the
   three fish-pace repositories. It is the evidence base the skill was built
   from — read it before changing the skill's technical claims.
+- This file is loaded automatically at session start by a `SessionStart` hook
+  (`~/claude-config/claude/hooks/load-repo-handoff.py`), which also lists the
+  filenames in `claude/notes/`. Project memory for this repo lives in
+  `~/claude-config/claude/memory/-home-jovyan-agent-skills/`, symlinked into
+  `~/.claude/projects/`, so it is versioned and syncs between hubs.
 
 ## Working principles
 
@@ -52,6 +57,15 @@ Nothing in it is proven against a real source, destination, or build. See
 - **2026-09-03 — README "Using a skill" section** (issue #7 → PR #8), because
   the install docs said where files go but never how a skill activates. The
   team is new to Agent Skills.
+- **2026-09-03 — `virtual-icechunk` installed as a personal skill** on this hub:
+  `~/.claude/skills/virtual-icechunk` → `~/.agents/skills/virtual-icechunk` →
+  `/home/jovyan/agent-skills/skills/virtual-icechunk`. A `git pull` here updates
+  it everywhere; it is available in every repo on this machine.
+- **2026-09-03 — session tooling moved into `~/claude-config`** (that repo, not
+  this one): the handoff-loading hook, the `claude/handoff.md` + `claude/notes/`
+  convention, and Eli's phrase routines ("I am about to clear", "this task is
+  done", "I am about to sign off") are now written into the global `CLAUDE.md`
+  rather than being re-explained each session.
 
 ## Open threads
 
