@@ -42,17 +42,29 @@ scenarios — Eli explicitly declined live testing in the session that wrote it.
 Nothing in it is proven against a real source, destination, or build. See
 `claude/notes/virtual-icechunk-skill.md`.
 
-## In progress / next
+## Recent work
 
-- **Test `virtual-icechunk` for real** (not started). Run Research & plan and
-  the smoke-test mode against an actual dataset, then feed what breaks back
-  through `skills/virtual-icechunk/references/learn-and-evolve.md`. This is the
-  obvious next task and the skill's status should not move off Experimental
-  until it happens.
-- **Unresolved topics deliberately left out of the skill**, each recorded in
-  `learn-and-evolve.md`: ERDDAP as a virtual source (no validated example
-  exists); browser/WASM reading and CORS (never tested in a browser); Arraylake
+- **2026-09-03 — built the `virtual-icechunk` skill** (issue #4 → PR #6). Five
+  modes, 14 reference files, evals. Eli answered 16 open technical questions
+  during the build; the durable subset is in
+  `claude/notes/virtual-icechunk-skill.md` and in the skill's
+  `references/learn-and-evolve.md`.
+- **2026-09-03 — README "Using a skill" section** (issue #7 → PR #8), because
+  the install docs said where files go but never how a skill activates. The
+  team is new to Agent Skills.
+
+## Open threads
+
+Not a task list — context for whatever comes up. Ask before acting on any of it.
+
+- The skill has never been run (see above). A real trial would be the natural
+  next thing, but it is not scheduled.
+- Topics deliberately left out of the skill, each recorded in
+  `references/learn-and-evolve.md`: ERDDAP as a virtual source (no validated
+  example); browser/WASM reading and CORS (never tested in a browser); Arraylake
   and non-Source-Cooperative destinations; automated incremental updates; the
   PACE HTTPS-vs-in-region decision; dependency lock strategy. Each needs a real
   example before it becomes guidance.
+- `AGENTS.md` says keep the repo agent-independent; a committed `claude/`
+  directory sits in mild tension with that. Flagged for Eli, undecided.
 - The catalog has room for more skills; nothing is queued.
