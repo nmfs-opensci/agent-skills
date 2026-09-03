@@ -69,5 +69,5 @@ the [new-skill](.github/ISSUE_TEMPLATE/new-skill.yml) or
 
 [agent-skills]: https://agentskills.io/specification
 [copilot-skills]: https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
-[claude-skills]: https://docs.anthropic.com/en/docs/claude-code/skills
+[claude-skills]: https://code.claude.com/docs/en/skills
 [codex-skills]: https://developers.openai.com/codex/skills

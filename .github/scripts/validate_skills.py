@@ -90,10 +90,16 @@ def validate_skills() -> list[str]:
         name = fields.get("name", "")
         if name and not NAME_PATTERN.fullmatch(name):
             errors.append(f"{skill_file.relative_to(ROOT)}: invalid skill name '{name}'")
+        if len(name) > 64:
+            errors.append(f"{skill_file.relative_to(ROOT)}: name exceeds 64 characters")
         if name and name != skill_dir.name:
             errors.append(
                 f"{skill_file.relative_to(ROOT)}: name '{name}' does not match "
                 f"directory '{skill_dir.name}'"
+            )
+        if len(fields.get("description", "")) > 1024:
+            errors.append(
+                f"{skill_file.relative_to(ROOT)}: description exceeds 1024 characters"
             )
         if not NAME_PATTERN.fullmatch(skill_dir.name):
             errors.append(
