@@ -63,8 +63,9 @@ Installation commands, discovery locations, and agent support can change.
 Before installing, check the current official documentation for
 [GitHub Copilot Agent Skills][copilot-skills],
 [Claude Code skills][claude-skills], and [Codex skills][codex-skills]. The
-canonical bundles in this catalog follow the [open Agent Skills
-specification][agent-skills] rather than a product-specific format.
+canonical bundles in this catalog use the portable required subset of the
+[open Agent Skills specification][agent-skills] rather than a product-specific
+format.
 
 To propose a skill or change, read [CONTRIBUTING.md](CONTRIBUTING.md) and use
 the [new-skill](.github/ISSUE_TEMPLATE/new-skill.yml) or

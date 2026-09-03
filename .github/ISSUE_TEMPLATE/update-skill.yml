@@ -1,8 +1,6 @@
 name: Update skill
 description: Propose a correction or improvement to an existing skill
 title: "[Update skill]: "
-labels:
-  - update-skill
 body:
   - type: input
     id: name

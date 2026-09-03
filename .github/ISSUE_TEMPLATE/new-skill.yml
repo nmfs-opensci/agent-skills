@@ -1,8 +1,6 @@
 name: New skill
 description: Propose a reusable skill for the shared catalog
 title: "[New skill]: "
-labels:
-  - new-skill
 body:
   - type: input
     id: name
