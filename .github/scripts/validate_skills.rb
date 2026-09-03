@@ -51,7 +51,7 @@ def parse_frontmatter(path)
   end
 
   %w[name description].each do |required|
-    unless fields[required].is_a?(String) && !fields[required].empty?
+    unless fields[required].is_a?(String) && !fields[required].strip.empty?
       errors << "#{relative(path)}: missing or invalid frontmatter field '#{required}'"
     end
   end
