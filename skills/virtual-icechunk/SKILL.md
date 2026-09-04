@@ -24,6 +24,7 @@ from an unverified pattern.
 | Build a new virtual store | **Create** | plan → smoke test → production → docs |
 | Review or modernize an existing workflow | **Audit** | `references/audit.md` |
 | Ask why a store is slow, or whether one will be | **Diagnose** | `references/performance-tuning.md` |
+| Ask whether a browser can read the store, or hit a CORS wall | **Browser access** | `references/browser-access.md` |
 | Capture what a finished job taught | **Learn** | `references/learn-and-evolve.md` |
 
 ## Create: the required order
@@ -78,6 +79,23 @@ Raise this proactively. When planning a build, when reviewing someone else's
 plan, and when validating, flag the decisions in that reference's design table
 rather than waiting for a complaint.
 
+## Browser readers and CORS
+
+If the store is meant to be read from a browser, a virtual store needs CORS on
+**two** hosts — the repository and wherever the source bytes live — because
+metadata and data come from different places. A repository that is CORS-enabled
+while its sources are not will open, show correct metadata, and fail on every
+data read.
+
+The entry people miss is `Range`: chunk reads are byte-range requests, `Range` is
+not CORS-safelisted, so it must be allowed explicitly or nothing loads.
+`references/browser-access.md` has the tested policies, a request an admin can
+apply without editing, how to verify without a browser, and the fallbacks when
+the bucket cannot be changed.
+
+**Curl proving the headers is not the same as a browser rendering the store.**
+Keep those claims separate, exactly as with Python reads.
+
 ## Non-negotiables
 
 - **Source access and destination storage are two independent configurations**,
@@ -108,7 +126,8 @@ obsolete · unverified
 Combine the newest applicable general pattern, the closest source-specific
 pattern, the closest destination-specific pattern, and the current official API
 docs. Do not clone whichever example is newest. A one-off fix is not a standard,
-and a Python workaround is not evidence about browsers.
+and a Python workaround is not evidence about browsers
+(`references/browser-access.md` covers what is and is not verified there).
 
 ## Known traps
 

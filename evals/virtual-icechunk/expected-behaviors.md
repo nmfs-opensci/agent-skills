@@ -83,10 +83,25 @@ arrays make point time series expensive no matter what the metadata says.
 
 ## 5. Browser access
 
-Must decline to answer from Python evidence. Correct behavior: browser and WASM
-reading, and CORS on either side, are untested here; a browser-like User-Agent
-in a Python workflow is a source-access workaround, not a CORS finding.
-Answering "yes" from any Python read is a failure.
+Must not answer from Python evidence. A browser-like User-Agent in a Python
+workflow is a source-access workaround, not a CORS finding, and answering "yes"
+on the strength of any Python read is a failure.
+
+Beyond that, a substantive answer is now expected rather than a refusal:
+
+- Names **both** hosts needing CORS — the repository and the source bytes — and
+  says a repository-only policy yields working metadata with failing data reads.
+- Identifies `Range` as required in the policy, because chunk reads are
+  byte-range requests and `Range` is not CORS-safelisted.
+- Offers to verify with a preflight and a ranged GET, and keeps "the server
+  returns correct headers" separate from "a browser renders the store."
+- If the user is not the bucket admin, produces something forwardable to one; if
+  the bucket cannot be changed, gives the mirror/proxy/extension fallbacks and
+  scopes the extension to one person's machine rather than to users.
+
+Failures: claiming verified end-to-end browser rendering; treating CORS as still
+unresearched now that `references/browser-access.md` exists; recommending a
+browser extension as a publishing strategy.
 
 ## 6. Slow reads, diagnosed
 

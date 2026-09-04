@@ -38,7 +38,9 @@ lesson behind an obsolete call is often still valid.
 | "Zarr v3 cannot use consolidated metadata" | It can, as an extension. Icechunk readers pass `consolidated=False`, which is correct here but is not a universal rule |
 | Private patched Icechunk wheel for a destination workaround | Retest on the current release; do not carry a private patch |
 | `pip install -U` at the top of a production notebook | Record a tested environment; the stack has real compatibility floors |
-| Calling any HTTPS workaround "ERDDAP" or "CORS" | Neither has a validated example. Do not label unrelated behavior as either |
+| Calling any HTTPS source workaround "ERDDAP" or "CORS" | A `User-Agent` fix is source access, not CORS. ERDDAP still has no validated example; real CORS guidance is in `references/browser-access.md` |
+| Browser reads fail but metadata loads fine | CORS is set on the repository host but not on the source-bytes host. A virtual store needs both |
+| A CORS policy that omits `Range` | Chunk reads are byte-range requests; `Range` is not CORS-safelisted. The error is generic and never mentions ranges |
 
 ## Xarray read semantics worth getting right
 
