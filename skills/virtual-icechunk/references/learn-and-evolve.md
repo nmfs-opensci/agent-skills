@@ -38,8 +38,10 @@ Treat everything here as open. Do not present any of it as settled practice.
 - ERDDAP as a virtual source. No validated example exists. Research it fresh;
   do not reuse another provider's HTTP workaround and call it an ERDDAP or CORS
   pattern.
-- Browser and WASM reading, and source or destination CORS. Nothing has been
-  tested in a browser. A successful Python read is not evidence.
+- Browser and WASM *reading*. Still nothing rendered in a browser, and a
+  successful Python read is not evidence. **CORS is no longer in this category** —
+  see `references/browser-access.md`, which has policies verified on two real
+  buckets. What remains unverified there is the client half, not the server half.
 - Automated incremental discovery, append, scheduling, and conflict handling.
 
 **Unresolved**

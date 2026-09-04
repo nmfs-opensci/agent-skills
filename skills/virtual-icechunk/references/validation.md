@@ -39,8 +39,11 @@ opens cleanly over broken references is a common and misleading result.
 - Test the intended access environment when it matters: the consumer's region
   for in-region S3 references, or the consumer's credential type for a protected
   source.
-- **Do not infer browser support from a Python read.** Browser and WASM access,
-  and source or destination CORS, are unresearched here. If asked, say so.
+- **Do not infer browser support from a Python read.** For a store intended to
+  be read from a browser, check CORS on **both** hosts — the repository and the
+  source bytes — and verify with a preflight plus a ranged GET, not with Python.
+  `references/browser-access.md`. Confirming the headers is still not the same as
+  rendering the store in a browser; WASM read paths remain untested.
 
 ## Performance
 
