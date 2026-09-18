@@ -111,11 +111,10 @@ Not a task list — context for whatever comes up. Ask before acting on any of i
   half of the same question: most real GRIB is forecast output, so the two will
   probably arrive together. earth-mover's `FMRC.md` is the strongest single
   document in their repo and the skill has nothing on it.
-- The evals have never been executed. earth-mover's repo has a runnable harness
-  (Claude Agent SDK, LLM personas answering `AskUserQuestion` through
-  `can_use_tool`, metrics committed per run as JSONL) that would port; ours are
-  prose scenarios and a rubric. Not started, and their own harness has not had
-  a live run either.
+- The evals have never been executed. earth-mover has a runnable harness that
+  would largely port — the mechanism and the metric list are in
+  [notes/earth-mover-comparison.md](notes/earth-mover-comparison.md). Not
+  started, and their own harness has not had a live run either.
 - Topics still deliberately left out of the skill, each recorded in
   `references/learn-and-evolve.md`: ERDDAP as a virtual source (no validated
   example); WASM read paths and browser rendering from a GCS source
@@ -133,3 +132,5 @@ Not a task list — context for whatever comes up. Ask before acting on any of i
   is shaped the way it is, and its testing status
 - [expanding-format-coverage.md](notes/expanding-format-coverage.md) — GRIB,
   TIFF and Zarr: where the material is, for the later widening
+- [earth-mover-comparison.md](notes/earth-mover-comparison.md) — how the
+  vendor's skill compares, what was taken, what to port next
