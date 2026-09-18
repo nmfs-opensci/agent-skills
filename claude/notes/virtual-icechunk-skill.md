@@ -80,7 +80,7 @@ CF-compliance was only covered for files you produce, though metadata is the one
 thing a virtual store *can* fix; and nothing guarded the destructive cleanup
 cells every build notebook grows.
 
-Since then `fish-pace/icechunks` adopted the skill — its `CLAUDE.md` names it as
+Since then `ocean-icechunks/icechunks` adopted the skill — its `CLAUDE.md` names it as
 the authority to prefer over that repository's own notebooks — and the
 OA-indicators store was built under it on 2026-09-17. PR #13 harvested what that
 build taught, including one place where the skill was flatly wrong (it claimed

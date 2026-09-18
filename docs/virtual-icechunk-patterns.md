@@ -48,16 +48,16 @@ approximate sequence:
 |---|---|---|
 | 2026-06-27 to 2026-07-27 | [`fish-pace/pace-icechunks`](https://github.com/fish-pace/pace-icechunks/tree/77adbd0d158fe446756e3496fe5a2ab1005a48a8): NASA PACE OCI | Initial CHL notebooks appeared in [`de6b6dc`](https://github.com/fish-pace/pace-icechunks/commit/de6b6dcb51122c4c7b3ef8457b70de0ad6abb2a0); RRS in [`0b4338d`](https://github.com/fish-pace/pace-icechunks/commit/0b4338d2c3424b4a943198bb5910f67f48b7e9a6); Kd was refined through [`8b24f34`](https://github.com/fish-pace/pace-icechunks/commit/8b24f347ba5495e63ab471e534f493e34d26e4ca). Temporary-credential recovery and cadence/grid groups developed here. Copernicus experiments were added on July 24, then deliberately removed in [`8e88bfb`](https://github.com/fish-pace/pace-icechunks/commit/8e88bfb716c486d7bd5978045dcbb1f81779e5df); they are history, not current code. |
 | 2026-07-25 to 2026-08-06 | [`fish-pace/globcolour-Icechunks`](https://github.com/fish-pace/globcolour-Icechunks/tree/03b273566415ea7ea3eeb2c391ca1b2e70676f37): Copernicus GlobColour | Prototypes arrived in [`936edc0`](https://github.com/fish-pace/globcolour-Icechunks/commit/936edc04ba1767ce92c016822c7454b978d00833); “need to fix manifest” expanded the catalog in [`f9aa826`](https://github.com/fish-pace/globcolour-Icechunks/commit/f9aa8263bac2255171284bf71dc32e953481c5c8); [`03b2735`](https://github.com/fish-pace/globcolour-Icechunks/commit/03b273566415ea7ea3eeb2c391ca1b2e70676f37) added manifest splitting and restart logic. The checked output validates 5,740 of a listed 10,490 files, so completion is not established. |
-| 2026-08-25 to 2026-08-26 | [`fish-pace/icechunks`](https://github.com/fish-pace/icechunks/tree/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8): NOAA CoastWatch OHC | The full pipeline landed in [`a9a674e`](https://github.com/fish-pace/icechunks/commit/a9a674e0633f1d3a1529f7be335865d6c156c8a1), with smoke tests in [`4dc330f`](https://github.com/fish-pace/icechunks/commit/4dc330fb86275c2ea624216a5f7aafb51df7947a). [`2b54a2b`](https://github.com/fish-pace/icechunks/commit/2b54a2b2eeb5cb1bdfb469a7baa29f2a6056b578) records incremental updates as undesigned. [`e7546f7`](https://github.com/fish-pace/icechunks/commit/e7546f70e6b89edb0a071ad22493527d2300915d) changed destination references but explicitly left rebuilding for later. |
+| 2026-08-25 to 2026-08-26 | [`ocean-icechunks/icechunks`](https://github.com/ocean-icechunks/icechunks/tree/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8): NOAA CoastWatch OHC | The full pipeline landed in [`a9a674e`](https://github.com/ocean-icechunks/icechunks/commit/a9a674e0633f1d3a1529f7be335865d6c156c8a1), with smoke tests in [`4dc330f`](https://github.com/ocean-icechunks/icechunks/commit/4dc330fb86275c2ea624216a5f7aafb51df7947a). [`2b54a2b`](https://github.com/ocean-icechunks/icechunks/commit/2b54a2b2eeb5cb1bdfb469a7baa29f2a6056b578) records incremental updates as undesigned. [`e7546f7`](https://github.com/ocean-icechunks/icechunks/commit/e7546f70e6b89edb0a071ad22493527d2300915d) changed destination references but explicitly left rebuilding for later. |
 
 Relevant issues explain choices better than the minimal READMEs:
 
 * PACE [issue 1](https://github.com/fish-pace/pace-icechunks/issues/1)
   motivated the removed Copernicus experiment and prohibited a hard-coded user.
-* CoastWatch [issue 2](https://github.com/fish-pace/icechunks/issues/2)
+* CoastWatch [issue 2](https://github.com/ocean-icechunks/icechunks/issues/2)
   documents the schema/codec boundaries, missing-value behavior, and the
   one-element time-chunk performance problem.
-* CoastWatch [issue 9](https://github.com/fish-pace/icechunks/issues/9) asks for
+* CoastWatch [issue 9](https://github.com/ocean-icechunks/icechunks/issues/9) asks for
   future standardization while requiring current package-version checks.
 * The only GlobColour issue is explicitly a
   [materialized GOBAI write](https://github.com/fish-pace/globcolour-Icechunks/issues/1);
@@ -71,7 +71,7 @@ No explanatory issue comments or review threads were found in the three projects
 |---|---|---|---|---|---|
 | PACE | [`environment.yml`](https://github.com/fish-pace/pace-icechunks/blob/77adbd0d158fe446756e3496fe5a2ab1005a48a8/environment.yml) specifies Python 3.12 and `earthaccess>=0.18`; notebook output shows Python 3.12.12 and Earthaccess 0.18.0 | Unpinned upgrade | Unpinned upgrade | Both unpinned | Weak: no lockfile or recorded versions for the core stack. |
 | GlobColour | Notebook metadata records Python 3.12.12 | Current production output records 2.1.2; the diagnostic notebook records a local `2.1.1+patched` wheel | Unpinned upgrade | Both unpinned | Weak: [`copernicus-icechunk-sc.ipynb`](https://github.com/fish-pace/globcolour-Icechunks/blob/03b273566415ea7ea3eeb2c391ca1b2e70676f37/copernicus-icechunk-sc.ipynb) installs latest packages at run time; no environment file exists. |
-| CoastWatch | Notebook metadata records Python 3.12.12 | `>=2.1` | `>=2.4` | Both unpinned | Better lower bounds, but no lockfile and some imported direct dependencies are omitted from the install cell in [`ocean-heat-production-sc.ipynb`](https://github.com/fish-pace/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-production-sc.ipynb). |
+| CoastWatch | Notebook metadata records Python 3.12.12 | `>=2.1` | `>=2.4` | Both unpinned | Better lower bounds, but no lockfile and some imported direct dependencies are omitted from the install cell in [`ocean-heat-production-sc.ipynb`](https://github.com/ocean-icechunks/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-production-sc.ipynb). |
 | Current official releases checked 2026-09-03 | VirtualiZarr 2.7.3 requires Python ≥3.12 | 2.2.0 | 2.7.3 | Xarray 2026.07.0; Zarr-Python 3.3.0 | These are comparison points, not retroactive claims about notebook runtimes. |
 
 Current API facts were checked against versioned official documentation:
@@ -101,7 +101,7 @@ stored.
 
 | Concern | NASA PACE | Copernicus GlobColour | NOAA CoastWatch OHC |
 |---|---|---|---|
-| Discovery | `earthaccess.search_data` by short name, date range, cadence, and grid; get in-region links. See [`pace-chl-icechunk-sc.ipynb`](https://github.com/fish-pace/pace-icechunks/blob/77adbd0d158fe446756e3496fe5a2ab1005a48a8/pace-chl-icechunk-sc.ipynb). | `copernicusmarine get --create-file-list`, then sort the saved list. See [`copernicus-icechunk-sc.ipynb`](https://github.com/fish-pace/globcolour-Icechunks/blob/03b273566415ea7ea3eeb2c391ca1b2e70676f37/copernicus-icechunk-sc.ipynb). | Scrape Apache directory listings, discover year folders, retry slow listings, sort names, and split at known filenames. See [`ocean-heat-production-sc.ipynb`](https://github.com/fish-pace/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-production-sc.ipynb). |
+| Discovery | `earthaccess.search_data` by short name, date range, cadence, and grid; get in-region links. See [`pace-chl-icechunk-sc.ipynb`](https://github.com/fish-pace/pace-icechunks/blob/77adbd0d158fe446756e3496fe5a2ab1005a48a8/pace-chl-icechunk-sc.ipynb). | `copernicusmarine get --create-file-list`, then sort the saved list. See [`copernicus-icechunk-sc.ipynb`](https://github.com/fish-pace/globcolour-Icechunks/blob/03b273566415ea7ea3eeb2c391ca1b2e70676f37/copernicus-icechunk-sc.ipynb). | Scrape Apache directory listings, discover year folders, retry slow listings, sort names, and split at known filenames. See [`ocean-heat-production-sc.ipynb`](https://github.com/ocean-icechunks/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-production-sc.ipynb). |
 | Source authentication | Earthaccess login for discovery; temporary OBDAAC S3 credentials for consumer reads. | The CLI may authenticate discovery. Checked virtual reads use anonymous CloudFerro HTTPS `HttpAccess`; the notebook's statement that reads require Copernicus credentials is not demonstrated. | Anonymous HTTPS. A browser-like User-Agent is needed by Python discovery/parser requests; Icechunk's own User-Agent succeeds for payload reads. |
 | Embedded reference scheme | `s3://ob-cumulus-prod-public/...` in `us-west-2`. | Convert provider S3 URLs to `https://s3.waw3-1.cloudferro.com/...`. | Native `https://coastwatch.noaa.gov/...` URLs. |
 | Parser | HDF/NetCDF4 via HDF parser, largely through `earthaccess.virtualize`. | `HDFParser` with an `ObjectStoreRegistry` over HTTPS. | `NetCDF3Parser` for older groups and `HDFParser` for current HDF5. NetCDF3 needs separate fsspec reader options. |
@@ -185,7 +185,7 @@ release policy.
 
 A smoke test should be small enough to rerun and should isolate source behavior
 from destination behavior. The CoastWatch
-[`ocean-heat-test-local.ipynb`](https://github.com/fish-pace/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-test-local.ipynb)
+[`ocean-heat-test-local.ipynb`](https://github.com/ocean-icechunks/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-test-local.ipynb)
 is the clearest existing shape:
 
 1. Pin/report versions.
@@ -211,7 +211,7 @@ The repositories contain two competing production approaches:
 | Approach | Evidence | Strength | Limitation |
 |---|---|---|---|
 | Sequential per-file append, commit every N files | PACE writers and GlobColour [`copernicus-icechunk-sc.ipynb`](https://github.com/fish-pace/globcolour-Icechunks/blob/03b273566415ea7ea3eeb2c391ca1b2e70676f37/copernicus-icechunk-sc.ipynb) | Fine-grained durable checkpoints; refreshes short-lived credentials | Slow repeated metadata mutation; manual `start_index` can skip or duplicate data |
-| Combine all files in one compatible group, commit once | CoastWatch [`ocean-heat-production-sc.ipynb`](https://github.com/fish-pace/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-production-sc.ipynb) | Efficient parallel metadata opening; one coherent write | Coarse recovery; existing group is skipped even if incomplete; incremental append remains undesigned |
+| Combine all files in one compatible group, commit once | CoastWatch [`ocean-heat-production-sc.ipynb`](https://github.com/ocean-icechunks/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/ocean-heat-production-sc.ipynb) | Efficient parallel metadata opening; one coherent write | Coarse recovery; existing group is skipped even if incomplete; incremental append remains undesigned |
 
 A future production builder should keep configurable batches but derive progress
 from committed repository state plus a saved source manifest, not from an
@@ -285,7 +285,7 @@ eagerly materializing several GB.
 ## 10. README and loading-function patterns
 
 The CoastWatch
-[`README`](https://github.com/fish-pace/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/README.md)
+[`README`](https://github.com/ocean-icechunks/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/coastwatch-heat-content/README.md)
 is the strongest user-facing example. A published virtual dataset README should
 state:
 
@@ -335,7 +335,7 @@ credentials.
 | Default Python User-Agent receives 403 | CoastWatch | Source-specific. It is not a CORS finding. |
 | Source Cooperative lacked an Icechunk operation | GlobColour debug notebook records server-side-copy HTTP 501 and a patched 2.1.1 wheel | Historical destination-specific workaround. Retest released 2.2.0; do not retain a private patch by default. |
 | Catch-all create/open fallback hides root cause | All projects | Replace in future code with explicit existence handling and preserve auth/network/config errors. |
-| Published destination may not match validated destination | CoastWatch [`CLAUDE.md`](https://github.com/fish-pace/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/CLAUDE.md) says the new destination still needed a rebuild | Treat availability as unresolved until a new public read succeeds. |
+| Published destination may not match validated destination | CoastWatch [`CLAUDE.md`](https://github.com/ocean-icechunks/icechunks/blob/447ff435dfd70ed3438a9d12bf5e7a22ec309fc8/CLAUDE.md) says the new destination still needed a rebuild | Treat availability as unresolved until a new public read succeeds. |
 
 ## 12. Older patterns that may need updating
 

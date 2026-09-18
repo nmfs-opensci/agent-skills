@@ -135,7 +135,7 @@ Consult all four of these and combine them; do not clone whichever is newest:
 Reference implementations, newest first — each is a snapshot of practice at its
 date, not a standard:
 
-- NOAA CoastWatch OHC — <https://github.com/fish-pace/icechunks>
+- NOAA CoastWatch OHC — <https://github.com/ocean-icechunks/icechunks>
 - Copernicus GlobColour — <https://github.com/fish-pace/globcolour-Icechunks>
 - NASA PACE OCI — <https://github.com/fish-pace/pace-icechunks>
 - Annotated outline — `docs/example-virtual-icechunk-pipeline.ipynb` in this

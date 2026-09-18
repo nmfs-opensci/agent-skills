@@ -42,7 +42,7 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
 ## What the skill has been through
 
 **`skills/virtual-icechunk/` has been used on a real build.** It was written
-without live testing (2026-09-03), but `fish-pace/icechunks` has since adopted
+without live testing (2026-09-03), but `ocean-icechunks/icechunks` has since adopted
 it: that repository's `CLAUDE.md` names it as the authority to prefer over
 re-deriving practice from its own notebooks, and the OA-indicators store was
 built under it on 2026-09-17. So it is no longer unproven — though "used" is
