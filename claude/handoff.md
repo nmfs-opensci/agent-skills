@@ -6,16 +6,26 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
 ## Repo state
 
 - Repo: `nmfs-opensci/agent-skills`, working on `/home/jovyan/agent-skills`.
-- Branch: `main`, clean, up to date with `origin/main`. **No open PRs, no open
-  issues.** PR #6 (`skill/virtual-icechunk`, issue #4) and PR #8
-  (`docs/using-a-skill`, issue #7) both squash-merged 2026-09-03; branches
-  deleted, issues auto-closed.
+- Branch: `main`, clean, up to date with `origin/main`. **No open PRs.** Merged
+  so far: #6 (the skill, issue #4) and #8 (README) on 2026-09-03, #10
+  (browser-access) on 2026-09-04, #13 (OA lessons, issue #12) and #15 (repo
+  rename, issue #14) on 2026-09-18. All squash-merged, branches deleted, issues
+  auto-closed.
+- **One issue is open: #11, "add info on /tmp"**, filed 2026-09-04 by a hub
+  admin, not by Eli. It asks that guidance mention copying data to `/tmp` because
+  `$HOME` and `~/shared` are slow on this JupyterHub. It is about repo-level
+  agent guidance (`AGENTS.md`), not about the skill, and nothing has been done
+  with it. Ask before acting.
 - This is the **shared skill catalog**, not a working project. Skills live at
   `skills/<name>/`, evaluations separately at `evals/<name>/`. One skill so far:
   `virtual-icechunk` (Experimental).
 - `docs/virtual-icechunk-patterns.md` is the prior provisional analysis of the
-  three fish-pace repositories. It is the evidence base the skill was built
-  from — read it before changing the skill's technical claims.
+  three reference repositories. It is the evidence base the skill was built
+  from — read it before changing the skill's technical claims. It is a snapshot
+  of 2026-09-03 practice, though: for CoastWatch specifically, the live
+  repository `ocean-icechunks/icechunks` (moved from `fish-pace/icechunks` on or
+  before 2026-09-18) and its `claude/notes/` are fresher. The other two,
+  `fish-pace/globcolour-Icechunks` and `fish-pace/pace-icechunks`, did not move.
 - This file is loaded automatically at session start by a `SessionStart` hook
   (`~/claude-config/claude/hooks/load-repo-handoff.py`), which also lists the
   filenames in `claude/notes/`. Project memory for this repo lives in
