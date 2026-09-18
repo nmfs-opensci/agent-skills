@@ -105,7 +105,7 @@ Beyond that, a substantive answer is now expected rather than a refusal:
   scopes the extension to one person's machine rather than to users.
 
 Failures: claiming that no virtual store has ever rendered in a browser — one
-has, since 2026-09-17 — or, in the other direction, generalizing that single
+has, since 2026-09-18 — or, in the other direction, generalizing that single
 render into "yes, it will work" for a store nobody has opened; treating CORS as
 still unresearched now that `references/browser-access.md` exists; recommending a
 browser extension as a publishing strategy.

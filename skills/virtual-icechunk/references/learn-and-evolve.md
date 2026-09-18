@@ -40,7 +40,8 @@ Treat everything here as open. Do not present any of it as settled practice.
   pattern.
 - WASM read paths, and parts of browser reading — but the headline has moved. A
   virtual store **has** been rendered end to end in a browser (OA indicators,
-  2026-09-17), so "nothing has ever rendered" is false and must not be repeated.
+  confirmed 2026-09-18), so "nothing has ever rendered" is false and must not be
+  repeated.
   What is still open is narrower: rendering from a GCS source, the S3 policy in
   `references/browser-access.md`, and whether a given viewer handles extra
   dimensions, its own catalog metadata, or CF time. A successful Python read is
@@ -74,7 +75,9 @@ a virtual store at `ocean-icechunks/oa-indicators/climatology`, NCEI accession
 0270962, twelve NetCDFs merged into one flat group of 72 variables)
 
 - A virtual store renders in a browser across two hosts. The store's own viewer
-  draws from `data.source.coop` plus `www.ncei.noaa.gov`. The matching negative
+  draws from `data.source.coop` plus `www.ncei.noaa.gov` — transport verified on
+  the build date, rendering confirmed by the project owner on 2026-09-18. The
+  matching negative
   is equally informative: the CoastWatch OHC viewer, same repository host,
   renders coordinates and no science arrays because `coastwatch.noaa.gov` sends
   no `Access-Control-Allow-Origin`. The two-host model is confirmed, and so is
