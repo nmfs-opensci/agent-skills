@@ -70,7 +70,8 @@ Treat everything here as open. Do not present any of it as settled practice.
 - Exhaustive validation versus sampled checks at known transitions.
 - Dependency lock strategy for notebooks meant to stay runnable.
 
-**Settled by the OA-indicators build, 2026-09-17** (`fish-pace/icechunks` PR #24;
+**Settled by the OA-indicators build, 2026-09-17** (`ocean-icechunks/icechunks`
+PR #24;
 a virtual store at `ocean-icechunks/oa-indicators/climatology`, NCEI accession
 0270962, twelve NetCDFs merged into one flat group of 72 variables)
 
