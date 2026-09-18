@@ -101,12 +101,16 @@ deliberate step that has happened once (PR #13) and will need doing again.
 
 Not a task list — context for whatever comes up. Ask before acting on any of it.
 
-- **Two decisions deferred out of PR #13**, both needing Eli rather than a
-  default: whether to cover formats beyond NetCDF/HDF5 (earth-mover documents
-  virtual parsers for GRIB, TIFF/COG and existing Zarr — the skill's own
-  `description` draws the line at NetCDF/HDF5), and whether to add an FMRC
-  reference for forecast model run collections. FMRC is the strongest single
-  document in earth-mover's repo and the skill has nothing on it.
+- **Formats beyond NetCDF/HDF5 — Eli will do this later, deliberately not now**
+  (decided 2026-09-18). The skill's scope and `description` stay as they are.
+  The dossier for that work — parsers, packages, current versions, the layout
+  decision, and what each format needs before it counts as guidance — is in
+  [notes/expanding-format-coverage.md](notes/expanding-format-coverage.md).
+  Do not start it unasked.
+- **FMRC (forecast model run collections)** is still undecided, and is the other
+  half of the same question: most real GRIB is forecast output, so the two will
+  probably arrive together. earth-mover's `FMRC.md` is the strongest single
+  document in their repo and the skill has nothing on it.
 - The evals have never been executed. earth-mover's repo has a runnable harness
   (Claude Agent SDK, LLM personas answering `AskUserQuestion` through
   `can_use_tool`, metrics committed per run as JSONL) that would port; ours are
@@ -122,3 +126,10 @@ Not a task list — context for whatever comes up. Ask before acting on any of i
 - `AGENTS.md` says keep the repo agent-independent; a committed `claude/`
   directory sits in mild tension with that. Flagged for Eli, undecided.
 - The catalog has room for more skills; nothing is queued.
+
+## Notes
+
+- [virtual-icechunk-skill.md](notes/virtual-icechunk-skill.md) — why the skill
+  is shaped the way it is, and its testing status
+- [expanding-format-coverage.md](notes/expanding-format-coverage.md) — GRIB,
+  TIFF and Zarr: where the material is, for the later widening
