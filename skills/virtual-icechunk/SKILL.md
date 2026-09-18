@@ -83,18 +83,21 @@ rather than waiting for a complaint.
 
 If the store is meant to be read from a browser, a virtual store needs CORS on
 **two** hosts — the repository and wherever the source bytes live — because
-metadata and data come from different places. A repository that is CORS-enabled
-while its sources are not will open, show correct metadata, and fail on every
-data read.
+metadata and data come from different places. This is now observed rather than
+predicted: of two published stores sharing one repository host, the one whose
+*source* host returns `Access-Control-Allow-Origin` renders, and the one whose
+source host does not shows correct axes and no data at all.
 
-The entry people miss is `Range`: chunk reads are byte-range requests, `Range` is
-not CORS-safelisted, so it must be allowed explicitly or nothing loads.
-`references/browser-access.md` has the tested policies, a request an admin can
-apply without editing, how to verify without a browser, and the fallbacks when
-the bucket cannot be changed.
+What decides is `Access-Control-Allow-Origin` on the **ranged GET**, from each
+host. A single `Range: bytes=a-b` is CORS-safelisted, so there is often no
+preflight to inspect, and its absence proves nothing.
+`references/browser-access.md` has the observed hosts, the tested policies, a
+request an admin can apply without editing, how to verify without a browser, and
+the fallbacks when the bucket cannot be changed.
 
 **Curl proving the headers is not the same as a browser rendering the store.**
-Keep those claims separate, exactly as with Python reads.
+Keep those claims separate, exactly as with Python reads — and one store having
+rendered does not make the next one browser-ready.
 
 ## Non-negotiables
 
@@ -114,6 +117,14 @@ Keep those claims separate, exactly as with Python reads.
   repository object. `references/validation.md`.
 - **A committed Icechunk session is read-only.** Open a fresh writable session
   after every commit.
+- **Stop and say so when the request cannot be met**, instead of hunting for a
+  workaround: source bytes you cannot reach, data that is not array-like, a
+  format with no reader, a structure that will not map to a datacube. If the
+  blocker is a bug in xarray, VirtualiZarr, Icechunk or a parser, report it and
+  suggest an upstream issue rather than quietly building around it.
+- **Kill anything running longer than a few minutes and re-evaluate**, and
+  confirm before deploying a cluster or any billed compute. A build that is going
+  wrong gets more expensive, not more likely to finish.
 
 ## Do not over-generalize
 

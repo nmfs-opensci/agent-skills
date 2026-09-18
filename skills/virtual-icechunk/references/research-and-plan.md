@@ -68,6 +68,17 @@ Where they disagree, you must choose a partition. Prefer, in order:
    them.
 3. **Separate repositories**, when the products are independent.
 
+A worked example of (1), in the direction people find surprising: NCEI accession
+0270962 ships **one indicator per NetCDF file** — twelve files on a byte-identical
+grid. They are not a concatenation. They `merge` into a single flat group of 72
+variables, 84 objects of metadata referencing 82 MB that stays at the source.
+Splitting by file would have produced twelve stores for no reason. Compare
+CoastWatch OHC, which splits *into* groups because its codecs genuinely differ:
+same rule, opposite outcome, and the encodings are what decide.
+
+When you merge rather than concatenate, `xr.merge`'s `combine_attrs` is a trap —
+see `known-issues.md`.
+
 Record why each boundary exists so the project README can explain it and a later
 audit does not "fix" a deliberate split. See `validation.md` for the checks that
 prove a partition is really homogeneous.
@@ -76,7 +87,13 @@ prove a partition is really homogeneous.
 
 Real archives contain broken files. Check explicitly for:
 
-- coordinate variables that are all zero, all NaN, or missing;
+- coordinate variables that are all zero, all NaN, or missing. Two different
+  causes hide here, and they need opposite responses. Genuinely corrupt files
+  must be excluded. But an all-zero `lat`/`lon`/`depth` may instead be a **phony
+  HDF5 dimension scale**, with the real values sitting in sibling variables —
+  xarray reports `Dimensions without coordinates` and `sel()` does not work on
+  the source at all. That one is repairable with `swap_dims`: metadata, which is
+  exactly what a virtual store *can* fix (observed on NCEI accession 0270962);
 - attributes that cannot be serialized as JSON (bare `NaN`, `Inf`);
 - time values that must be derived from the filename because the file is wrong;
 - off-cadence or duplicated time steps — model the real cadence (for example an

@@ -41,9 +41,11 @@ opens cleanly over broken references is a common and misleading result.
   source.
 - **Do not infer browser support from a Python read.** For a store intended to
   be read from a browser, check CORS on **both** hosts — the repository and the
-  source bytes — and verify with a preflight plus a ranged GET, not with Python.
+  source bytes — with a ranged GET against each, not with Python.
   `references/browser-access.md`. Confirming the headers is still not the same as
-  rendering the store in a browser; WASM read paths remain untested.
+  rendering the store: one virtual store has now been rendered end to end, which
+  proves the path exists, not that yours works. If it matters, open it in a
+  browser. WASM read paths remain untested.
 
 ## Performance
 

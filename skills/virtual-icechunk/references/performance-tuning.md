@@ -64,6 +64,11 @@ this is the thing that makes virtual stores different to reason about.
    backend's preferred chunks — use it before concatenating groups. `chunks=None`
    gives no Dask, and a large selection materializes as NumPy on access.
 
+   Scalar indexing is the other half of this. Prefer
+   `isel(time=slice(0, 1), z=slice(0, 1)).squeeze(drop=True)` over
+   `isel(time=0, z=0)` on a virtual array: the scalar form can drag in a whole
+   chunk, or several, where the slice form fetches what was actually asked for.
+
 8. **Check whether the bucket is cold.** Object stores reshard based on observed
    load, so a new bucket or repository is measurably slower until it warms. Do
    not benchmark a first run on a fresh bucket.
@@ -120,6 +125,12 @@ config.manifest.max_concurrent_manifest_fetches_during_commit = 16
 **Experimental tuning, not a constant.** 100 time chunks per split and 16
 concurrent fetches are a reasonable starting point used on several large builds.
 They partition Icechunk metadata; they do not rechunk source data.
+
+VirtualiZarr's scaling guide supplies the far end of the range: past roughly 50
+million chunks, split a single large virtual dataset across several commits
+rather than one — <https://virtualizarr.readthedocs.io/en/stable/scaling.html>.
+Between "a long time series" and that ceiling there is no published threshold, so
+measure the open rather than guessing.
 
 Manifests load lazily, so the first read of an array pays the fetch.
 `ManifestPreloadConfig` with a `ManifestPreloadCondition` (`name_matches`,

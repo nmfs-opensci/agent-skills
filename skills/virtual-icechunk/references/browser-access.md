@@ -1,9 +1,13 @@
 # Browser access and CORS
 
-**Provisional.** The server-side configuration below is verified: policies were
-set and confirmed on two real GCS buckets on 2026-09-04. End-to-end rendering in
-an actual browser is **not** yet verified. Keep those two claims apart when you
-answer.
+**Partly verified.** A virtual store has now been rendered end to end in a
+browser: the OA-indicators gridlook viewer draws, reading metadata from
+`data.source.coop` and science bytes from `www.ncei.noaa.gov`. The store was
+built and its transport verified on 2026-09-17 (`fish-pace/icechunks` PR #24);
+the project owner confirmed it renders in a browser on 2026-09-18. The GCS
+policies below were separately set and confirmed on two real buckets on
+2026-09-04. Less is unverified than was, but the list at the end of this file is
+still real — keep saying which half of a claim you are making.
 
 Reading a virtual Icechunk store from a browser needs three things to be true.
 Only the first is about your store.
@@ -27,17 +31,43 @@ other host.
 Check both before concluding anything. When the store and the sources share one
 bucket — convenient but not the general case — one policy covers both.
 
+### Observed, 2026-09-17
+
+Three hosts across two published stores, and the difference decides whether the
+viewer draws:
+
+| Host | Role | Sends `Access-Control-Allow-Origin` | Result |
+|---|---|---|---|
+| `data.source.coop` | repository, both stores | `*`, on GET and preflight; `Range` honored | never the problem |
+| `www.ncei.noaa.gov` | source bytes, OA indicators | `*` on ranged GETs | viewer **draws** |
+| `coastwatch.noaa.gov` | source bytes, CoastWatch OHC | **none**, on GET or preflight | metadata and coordinates load; every science array blocked |
+
+The CoastWatch row is the two-host trap in its exact observed form, and its
+symptom is worth memorizing: **coordinates render and science arrays do not.**
+Coordinates are materialized chunks living in the repository, so they arrive
+from the host that is configured correctly; only the virtual arrays cross to the
+source. A reader who sees axes but no data has a source-host CORS problem, not a
+broken store.
+
 ## What has to be in the policy
 
-**`Range` is the load-bearing entry.** Every chunk read is an HTTP byte-range
-request. `Range` is not a CORS-safelisted request header, so the browser sends a
-preflight asking permission for it, and the server must allow it explicitly. Omit
-it and every read fails with a generic CORS error that never mentions ranges —
-which is why this costs people hours.
+**`Access-Control-Allow-Origin` on the ranged GET is the load-bearing entry**,
+from both hosts. Every chunk read is an HTTP byte-range request, and a *single*
+range of the form `Range: bytes=a-b` is a CORS-safelisted request header under
+the Fetch standard — so the browser often sends **no preflight at all**, and the
+whole exchange rides on the GET response carrying `Access-Control-Allow-Origin`.
+That is not theoretical: `www.ncei.noaa.gov` returns
+`Access-Control-Allow-Origin: *` on ranged GETs and offers nothing else, and the
+OA-indicators viewer draws.
 
-Also expose `Content-Range` so the client can interpret the 206. `Content-Type`
-and `Content-Length` are already safelisted response headers; listing them is
-harmless and conventional.
+Diagnose accordingly. A store that fails in a browser is not evidence that a
+preflight was rejected — check the ranged GET response from each host first.
+
+Still list `Range` in any policy you control. Multi-range requests, and any other
+non-safelisted request header, do force a preflight, so allowing it costs nothing
+and removes a class of surprise. Also expose `Content-Range` so the client can
+interpret the 206. `Content-Type` and `Content-Length` are already safelisted
+response headers; listing them is harmless and conventional.
 
 ### Google Cloud Storage
 
@@ -160,6 +190,11 @@ Want: preflight `200` with `access-control-allow-origin` and an
 `access-control-allow-origin` and an `access-control-expose-headers` covering
 `Content-Range`.
 
+**The ranged GET is the one that has to pass.** A host can look wrong on the
+preflight and still serve a browser perfectly well, because a single-range read
+never sends one — `www.ncei.noaa.gov` is exactly that case. Read the preflight as
+useful extra information, not as the verdict.
+
 A bucket with no policy is unmistakable: the GET still returns `206`, and there
 are no `access-control-*` headers anywhere.
 
@@ -178,6 +213,13 @@ fallbacks, best first:
 2. **A small proxy** that adds CORS headers. You now run a server, which is the
    thing a browser-native store was meant to avoid.
 3. **A CORS-disabling browser extension**, for one person's own machine.
+
+A fourth option is to **publish the viewer anyway**, knowing it will show
+coordinates and no data. That is defensible when the fix on the source side is a
+single server directive and the manifests do not change, so the day the header
+appears the store starts working with no rebuild — which is why the CoastWatch
+OHC viewer is published despite being blocked. Say plainly in the README that it
+does not currently draw, and why.
 
 For the extension, be honest about what it is:
 
@@ -216,13 +258,22 @@ visualization. Downsampled overviews are cheap relative to the full store.
 
 ## What is verified, and what is not
 
-**Verified**: that a missing policy blocks browsers; the exact GCS policy that
-works and that `Range` is required; that GCS handles `OPTIONS` itself; that a
-consumer stack exists (`zarrita` with `numcodecs.*` codecs, `icechunk-js` with
-virtual chunk payloads and `gs://` → HTTPS rewriting); that curl confirms the
-server side.
+**Verified**: that a virtual store renders end to end in a browser across two
+hosts (OA indicators, confirmed 2026-09-18); that a missing policy on the source
+host blocks exactly the science arrays and nothing else (CoastWatch OHC);
+that a single-range request is safelisted, so the ranged GET's
+`Access-Control-Allow-Origin` is what decides; the exact GCS policy that works;
+that GCS handles `OPTIONS` itself; that a consumer stack exists (`zarrita` with
+`numcodecs.*` codecs, `icechunk-js` with virtual chunk payloads and `gs://` →
+HTTPS rewriting); that curl confirms the server side.
 
-**Not verified**: rendering a virtual store end to end in a browser; the S3
-policy above; any WASM read path; whether a given viewer handles extra dimensions
-(a vertical level, say), needs its own catalog metadata, or reads CF time
-correctly. Say so when asked, and propose the check rather than the answer.
+**Not verified**: the S3 policy above; any WASM read path; rendering from a GCS
+source specifically — the verified render reads HTTPS from NCEI, and the verified
+GCS policies have never been driven by a browser; whether a given viewer handles
+extra dimensions (a vertical level, say), needs its own catalog metadata, or
+reads CF time correctly. Say so when asked, and propose the check rather than the
+answer.
+
+One render is one render. It proves the path exists and that the two-host model
+is right. It does not make every virtual store browser-ready, and the curl rule
+above still holds for any store nobody has actually opened.

@@ -91,16 +91,23 @@ Beyond that, a substantive answer is now expected rather than a refusal:
 
 - Names **both** hosts needing CORS — the repository and the source bytes — and
   says a repository-only policy yields working metadata with failing data reads.
-- Identifies `Range` as required in the policy, because chunk reads are
-  byte-range requests and `Range` is not CORS-safelisted.
+- Knows what actually decides: `Access-Control-Allow-Origin` on the ranged GET,
+  from each host. Treating an absent preflight as evidence that CORS is fine is
+  a failure — a single `Range: bytes=a-b` is safelisted, so there may be no
+  preflight at all. Still expected to allow `Range` in a policy it controls.
+- Recognizes the diagnostic symptom: coordinates rendering while science arrays
+  fail means the **source** host, because coordinates are materialized chunks in
+  the repository and only virtual arrays cross to the source.
 - Offers to verify with a preflight and a ranged GET, and keeps "the server
   returns correct headers" separate from "a browser renders the store."
 - If the user is not the bucket admin, produces something forwardable to one; if
   the bucket cannot be changed, gives the mirror/proxy/extension fallbacks and
   scopes the extension to one person's machine rather than to users.
 
-Failures: claiming verified end-to-end browser rendering; treating CORS as still
-unresearched now that `references/browser-access.md` exists; recommending a
+Failures: claiming that no virtual store has ever rendered in a browser — one
+has, since 2026-09-18 — or, in the other direction, generalizing that single
+render into "yes, it will work" for a store nobody has opened; treating CORS as
+still unresearched now that `references/browser-access.md` exists; recommending a
 browser extension as a publishing strategy.
 
 ## 6. Slow reads, diagnosed
@@ -141,7 +148,7 @@ Every one of these is a deliberate trap; a strong response catches most:
 Answering only "raise async.concurrency" is a failure. Predicting performance
 without asking what the native chunking is, is a weak response.
 
-## 7. Lesson capture
+## 8. Lesson capture
 
 - Classifies each lesson by scope, and does not promote a single observation to
   a core workflow rule.
