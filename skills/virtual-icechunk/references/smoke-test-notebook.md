@@ -70,6 +70,35 @@ production runs. If you need to test destination endpoint semantics, write a
 second minimal notebook that changes only step 8 to use the remote storage and
 writes to a scratch prefix.
 
+## The scratch-prefix test
+
+That second notebook is a normal step, not only a debugging aid: once the local
+smoke test passes, write the same small store to the real destination under a
+scratch prefix and read it back anonymously from its public URL. Mirror the
+production layout under the scratch root — `<scratch>/<dataset>/<store-name>` —
+so the paths, the viewer configuration and the loading code carry over with
+only the root changed.
+
+**Always publish two things beside the scratch store**, without waiting to be
+asked:
+
+1. **A browser viewer** pointed at the scratch store, at
+   `<scratch>/<dataset>/viewer/`. A Python read says nothing about whether a
+   browser can decode the store — byte order, fill and scale handling,
+   dimension names — and the scratch copy is where that is cheap to find out.
+   Verify transport yourself (status codes, content types, and CORS on **both**
+   hosts, `browser-access.md`), then ask a human to open it and report what
+   they see. If the source host sends no CORS header, say so and publish
+   anyway: the viewer renders under a CORS-disabling browser extension, which
+   is enough for a test.
+2. **A short README** at `<scratch>/<dataset>/README.md` holding three things
+   and no more: that this is a scratch copy which may be rewritten or deleted,
+   the viewer link, and the code to load the store. It is for debugging; the
+   project README is a separate deliverable (`project-docs.md`). Run the
+   loading code exactly as written, in an environment holding only the packages
+   its install line names, before uploading it. Upload with an explicit
+   `ContentType` (`destination-patterns.md`).
+
 ## Cleanup and teardown cells
 
 Every real build notebook grows cells that list and delete objects under a
