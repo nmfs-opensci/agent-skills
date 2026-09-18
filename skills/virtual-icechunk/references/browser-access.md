@@ -3,7 +3,8 @@
 **Partly verified.** A virtual store has now been rendered end to end in a
 browser: the OA-indicators gridlook viewer draws, reading metadata from
 `data.source.coop` and science bytes from `www.ncei.noaa.gov`. The store was
-built and its transport verified on 2026-09-17 (`fish-pace/icechunks` PR #24);
+built and its transport verified on 2026-09-17 (`ocean-icechunks/icechunks`
+PR #24);
 the project owner confirmed it renders in a browser on 2026-09-18. The GCS
 policies below were separately set and confirmed on two real buckets on
 2026-09-04. Less is unverified than was, but the list at the end of this file is
