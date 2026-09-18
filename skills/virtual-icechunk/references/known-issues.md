@@ -22,6 +22,11 @@ far it generalizes.
 | Server returns HTTP 501 on an Icechunk operation | Destination lacks server-side copy | Retest on current Icechunk before adopting any patch | Historical, destination-specific |
 | Root cause of a write failure is invisible | `try: Repository.create(...) except Exception: Repository.open(...)` swallows auth, network, and config errors | Handle only the "already exists" condition; let everything else raise | General |
 | Store is published but unreadable | The validated destination and the published destination were different | Availability is unproven until a public read from the published URL succeeds | General |
+| `ContainsGroupError` when re-running a build | `vz.to_icechunk` defaults to `mode="w-"`, so a second write is an error rather than a no-op | Pass `mode="w"` deliberately, or skip a populated store behind an explicit flag. Bit two notebooks in one repository | General |
+| Every variable's attributes come back empty after a merge | `xr.merge`'s `combine_attrs` applies to **variable** attributes, not only the dataset's, so `"drop"` empties all of them. Presents as VirtualiZarr losing metadata | Use `combine_attrs="drop_conflicts"` and clear the per-file globals by hand | General |
+| `StorageError: ... connection closed before message completed` on a virtual chunk read | A transient drop at the source host. Chunk reads have no retry path, so the reader sees it raw | Retry before investigating: verified 5/5 on retry after one such failure. Do not call it corruption | General shape, source-specific frequency |
+| `sel()` does not work on the source, and xarray reports `Dimensions without coordinates` | Phony all-zero HDF5 dimension scales, with the real values in sibling variables | `swap_dims` onto the real variables — a metadata repair, which is all a virtual store can do | Dataset-specific, common in older NetCDF |
+| `RepositoryNotFoundError` opening a published store | The read URL omits the bucket, or the prefix is wrong | Verify the full `{bucket}/{prefix}` by hand. This fails **deterministically** — it is not a flaky gateway, so do not paper over it with retries | General |
 
 ## Outdated patterns
 
@@ -39,8 +44,8 @@ lesson behind an obsolete call is often still valid.
 | Private patched Icechunk wheel for a destination workaround | Retest on the current release; do not carry a private patch |
 | `pip install -U` at the top of a production notebook | Record a tested environment; the stack has real compatibility floors |
 | Calling any HTTPS source workaround "ERDDAP" or "CORS" | A `User-Agent` fix is source access, not CORS. ERDDAP still has no validated example; real CORS guidance is in `references/browser-access.md` |
-| Browser reads fail but metadata loads fine | CORS is set on the repository host but not on the source-bytes host. A virtual store needs both |
-| A CORS policy that omits `Range` | Chunk reads are byte-range requests; `Range` is not CORS-safelisted. The error is generic and never mentions ranges |
+| Browser reads fail but metadata loads fine | CORS is set on the repository host but not on the source-bytes host. A virtual store needs both. The observed symptom is precise: coordinates render, science arrays do not |
+| "No preflight, so CORS is not the problem" | A single `Range: bytes=a-b` **is** CORS-safelisted, so there may be no preflight at all. What decides is `Access-Control-Allow-Origin` on the ranged GET, from both hosts. Allow `Range` in policies you control anyway, for the requests that do preflight |
 
 ## Xarray read semantics worth getting right
 

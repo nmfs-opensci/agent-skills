@@ -51,6 +51,12 @@ at the marked boundaries. Steps 1–7 involve no destination credentials at all.
    Do this on every multi-file build, not only when metadata reads have already
    become slow — see `performance-tuning.md`.
 
+   Where you concatenate by hand rather than through `open_virtual_mfdataset`,
+   pass `coords="minimal", compat="override", combine_attrs="override"`. Without
+   them xarray compares and broadcasts manifest-only coordinate arrays across
+   files, which on a virtual dataset either fails outright or consumes memory
+   wildly out of proportion to the data being referenced.
+
 10. **Write and commit a recoverable unit.** Record the snapshot ID and the
     manifest position it corresponds to, then open a fresh writable session.
 

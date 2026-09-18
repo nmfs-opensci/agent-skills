@@ -32,6 +32,15 @@ Pin the version in the URL so you are reading the docs for the release you have.
   <https://docs.xarray.dev/en/v2026.07.0/>
 - Zarr-Python — storage, performance, and the v3 migration guide:
   <https://zarr.readthedocs.io/en/stable/>
+- VirtualiZarr's scaling guide, for large builds specifically:
+  <https://virtualizarr.readthedocs.io/en/stable/scaling.html>
+- Earthmover's own Agent Skill, `icechunk-datacube-ingestion`:
+  <https://github.com/earth-mover/agent-skills>. Vendor guidance, so it tracks
+  Icechunk releases. Wider than this skill in scope (materialized as well as
+  virtual, organized by file format) and much thinner on two-host credentials,
+  CORS, and read performance. Worth checking for parser and format questions;
+  do not assume its Arraylake-centric access model transfers to another
+  destination.
 
 ## Recording an environment
 

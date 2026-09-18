@@ -29,7 +29,7 @@ provider sections no matter how much time they cost you.
 - Re-check version-sensitive claims against current official docs before
   promoting them.
 
-## Provisional and unverified, as of 2026-09-03
+## Provisional and unverified, as of 2026-09-18
 
 Treat everything here as open. Do not present any of it as settled practice.
 
@@ -38,10 +38,13 @@ Treat everything here as open. Do not present any of it as settled practice.
 - ERDDAP as a virtual source. No validated example exists. Research it fresh;
   do not reuse another provider's HTTP workaround and call it an ERDDAP or CORS
   pattern.
-- Browser and WASM *reading*. Still nothing rendered in a browser, and a
-  successful Python read is not evidence. **CORS is no longer in this category** —
-  see `references/browser-access.md`, which has policies verified on two real
-  buckets. What remains unverified there is the client half, not the server half.
+- WASM read paths, and parts of browser reading — but the headline has moved. A
+  virtual store **has** been rendered end to end in a browser (OA indicators,
+  2026-09-17), so "nothing has ever rendered" is false and must not be repeated.
+  What is still open is narrower: rendering from a GCS source, the S3 policy in
+  `references/browser-access.md`, and whether a given viewer handles extra
+  dimensions, its own catalog metadata, or CF time. A successful Python read is
+  still not evidence of any of it, and one render does not generalize.
 - Automated incremental discovery, append, scheduling, and conflict handling.
 
 **Unresolved**
@@ -57,11 +60,41 @@ Treat everything here as open. Do not present any of it as settled practice.
   filename, validate it against the real cadence for every product.
 - Whether a compatibility partition should be a group or an independent
   repository, beyond the default in `research-and-plan.md`.
-- Manifest split threshold and commit concurrency as scale-tuning choices.
+- Commit concurrency as a scale-tuning choice. The manifest split *threshold* is
+  partly answered: VirtualiZarr documents splitting a virtual dataset across
+  commits past roughly 50 million chunks. Below that ceiling there is still no
+  published number, and none has been measured here.
 - Whether the source manifest and build provenance belong inside the Icechunk
   repository or beside it.
 - Exhaustive validation versus sampled checks at known transitions.
 - Dependency lock strategy for notebooks meant to stay runnable.
+
+**Settled by the OA-indicators build, 2026-09-17** (`fish-pace/icechunks` PR #24;
+a virtual store at `ocean-icechunks/oa-indicators/climatology`, NCEI accession
+0270962, twelve NetCDFs merged into one flat group of 72 variables)
+
+- A virtual store renders in a browser across two hosts. The store's own viewer
+  draws from `data.source.coop` plus `www.ncei.noaa.gov`. The matching negative
+  is equally informative: the CoastWatch OHC viewer, same repository host,
+  renders coordinates and no science arrays because `coastwatch.noaa.gov` sends
+  no `Access-Control-Allow-Origin`. The two-host model is confirmed, and so is
+  its exact symptom.
+- A single `Range: bytes=a-b` is CORS-safelisted, so a blocked browser read
+  often involves no preflight at all. This corrects what
+  `references/browser-access.md` used to say.
+- One variable per file merges into one flat group; it does not concatenate, and
+  it does not justify one store per file. The mirror image of CoastWatch's
+  codec-driven split.
+- `xr.merge`'s `combine_attrs` reaches variable attributes, so `"drop"` empties
+  them all. It presents as VirtualiZarr losing metadata and is not.
+- `vz.to_icechunk` defaults to `mode="w-"`; a re-run raises `ContainsGroupError`.
+- Phony all-zero HDF5 dimension scales are repairable with `swap_dims` rather
+  than being grounds to exclude a file.
+- A transient `StorageError` on a virtual chunk read is a dropped connection,
+  not corruption. Retry before investigating.
+- CF compliance was substantive work, and real CF standard names existed for
+  only six of twelve indicators. None were invented for the rest — the right
+  outcome, and the reason the "check against the CF table" rule earns its place.
 
 **Settled by the project owner, 2026-09-03**
 

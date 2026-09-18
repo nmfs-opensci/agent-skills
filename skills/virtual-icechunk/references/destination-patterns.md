@@ -73,8 +73,21 @@ Arraylake / Earthmover, and NOAA or project object storage other than Source
 Cooperative. Each needs its own adapter and its own smoke test before it is
 written down as a pattern.
 
+One Arraylake detail is worth carrying even unverified, because it is the piece
+that has no analogue in the mechanics above: virtual ingestion into Arraylake
+requires configuring a **Virtual Chunk Access Policy** on the repository. It is
+the Arraylake form of this skill's "authorize every virtual prefix explicitly"
+rule, and forgetting it produces the same symptom — metadata opens, data reads
+fail. Source: Earthmover's own `icechunk-datacube-ingestion` skill,
+<https://github.com/earth-mover/agent-skills>. Not tested here.
+
 ## Publishing alongside the repository
 
 Upload the build notebook or script, the README, and the environment file next
 to the Icechunk prefix so the store is self-describing. On Source Cooperative
 this is an ordinary S3 upload with the same temporary credentials.
+
+**Set `ContentType` explicitly on every upload.** Source Cooperative serves
+content types exactly as uploaded and never infers them, so a file uploaded
+without one is served as `binary/octet-stream` — which browsers will not render
+and which silently downgrades a previously working mirror on the next refresh.
