@@ -29,8 +29,12 @@ confusion in the older repositories traces back to conflating them.
   `CONTRIBUTING.md` says bundles hold only `SKILL.md` plus
   references/scripts/assets. Flagged in PR #6 as a convention conflict for Eli
   to reconcile.
-- **Browser/WASM and CORS are out**, untested. The skill treats inferring
-  browser support from a Python read as an error.
+- **Browser/WASM and CORS were out**, untested — *superseded twice*. PR #10
+  (2026-09-04) brought CORS in with tested policies; PR #13 (2026-09-18) brought
+  browser rendering in, because the OA-indicators viewer draws. What survives
+  intact is the rule underneath: inferring browser support from a Python read is
+  still an error, and so is inferring it from curl, or from one store having
+  rendered.
 - **Rebuilding source files is the exception**, needing the data owner's
   explicit clearance — RFROM/GOBAI-O2 had it, which is unusual. An earlier draft
   read as though it were a routine option; corrected.
@@ -69,9 +73,23 @@ anything.
 
 ## Testing status
 
-None. See the caveat in `claude/handoff.md`. Dry-running the eval scenarios on
-paper did surface three real gaps, since fixed: the research checklist never
-asked whether variables are split across files; CF-compliance was only covered
-for files you produce, though metadata is the one thing a virtual store *can*
-fix; and nothing guarded the destructive cleanup cells every build notebook
-grows.
+**Used on a real build, never systematically evaluated.** Dry-running the eval
+scenarios on paper before release surfaced three real gaps, since fixed: the
+research checklist never asked whether variables are split across files;
+CF-compliance was only covered for files you produce, though metadata is the one
+thing a virtual store *can* fix; and nothing guarded the destructive cleanup
+cells every build notebook grows.
+
+Since then `fish-pace/icechunks` adopted the skill — its `CLAUDE.md` names it as
+the authority to prefer over that repository's own notebooks — and the
+OA-indicators store was built under it on 2026-09-17. PR #13 harvested what that
+build taught, including one place where the skill was flatly wrong (it claimed
+no virtual store had ever rendered in a browser) and one mechanism claim that was
+wrong in a way that would have misdirected a diagnosis (`Range` was said to force
+a CORS preflight; a single `bytes=a-b` range is safelisted, so often nothing
+preflights and the ranged GET's `Access-Control-Allow-Origin` is what decides).
+
+The lesson for this repo is procedural: **a build's evidence lands in the build
+repository's own `claude/notes/`, and someone has to carry it across.** It sat
+uncollected for two weeks, during which this repo's handoff still said the skill
+had never been run. The eval scenarios remain un-executed.
