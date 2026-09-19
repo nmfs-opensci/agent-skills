@@ -9,8 +9,13 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
 - Branch: `main`, clean, up to date with `origin/main`. **No open PRs.** Merged
   so far: #6 (the skill, issue #4) and #8 (README) on 2026-09-03, #10
   (browser-access) on 2026-09-04, #13 (OA lessons, issue #12) and #15 (repo
-  rename, issue #14) on 2026-09-18. All squash-merged, branches deleted, issues
-  auto-closed.
+  rename, issue #14) on 2026-09-18; #19 (a scratch-prefix test always gets a viewer
+  and a short README, issue #18) on 2026-09-19, opened from the HYCOM session in a
+  separate worktree. All squash-merged, branches deleted, issues auto-closed.
+- **Lessons from the HYCOM build are waiting for a Learn pass**, including two places
+  where the skill is wrong (`to_icechunk(encoding=...)` does not exist in VirtualiZarr
+  2.7.3; `chunks={}` breaks down at millions of chunks):
+  [notes/inbound-from-hycom-2026-09.md](notes/inbound-from-hycom-2026-09.md).
 - **One issue is open: #11, "add info on /tmp"**, filed 2026-09-04 by a hub
   admin, not by Eli. It asks that guidance mention copying data to `/tmp` because
   `$HOME` and `~/shared` are slow on this JupyterHub. It is about repo-level
