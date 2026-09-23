@@ -18,7 +18,7 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   [notes/inbound-from-hycom-2026-09.md](notes/inbound-from-hycom-2026-09.md).
 - **Eli's next task here (as of 2026-09-23): issue #21**, the append pitfall from the CEFI
   audit. Everything is in the issue.
-- **One issue is open: #11, "add info on /tmp"**, filed 2026-09-04 by a hub
+- **Also open: #11, "add info on /tmp"**, filed 2026-09-04 by a hub
   admin, not by Eli. It asks that guidance mention copying data to `/tmp` because
   `$HOME` and `~/shared` are slow on this JupyterHub. It is about repo-level
   agent guidance (`AGENTS.md`), not about the skill, and nothing has been done
