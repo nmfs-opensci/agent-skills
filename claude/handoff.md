@@ -16,6 +16,13 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   where the skill is wrong (`to_icechunk(encoding=...)` does not exist in VirtualiZarr
   2.7.3; `chunks={}` breaks down at millions of chunks):
   [notes/inbound-from-hycom-2026-09.md](notes/inbound-from-hycom-2026-09.md).
+- **Eli's next task here (as of 2026-09-23): the append pitfall from the CEFI audit.**
+  Appending per-year files with `vz.to_icechunk(append_dim=...)` when the source chunk
+  doesn't divide each file's length (100-day chunks, 365-day files) runs without error
+  but misplaces the data. The skill recommends appending and never checks alignment.
+  Eli isn't sure yet whether the answer is concat (which refuses these files) or
+  something else, so settle the recommendation with him before writing it in:
+  [notes/inbound-from-cefi-2026-09.md](notes/inbound-from-cefi-2026-09.md).
 - **One issue is open: #11, "add info on /tmp"**, filed 2026-09-04 by a hub
   admin, not by Eli. It asks that guidance mention copying data to `/tmp` because
   `$HOME` and `~/shared` are slow on this JupyterHub. It is about repo-level
