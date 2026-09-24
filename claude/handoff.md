@@ -16,8 +16,35 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   where the skill is wrong (`to_icechunk(encoding=...)` does not exist in VirtualiZarr
   2.7.3; `chunks={}` breaks down at millions of chunks):
   [notes/inbound-from-hycom-2026-09.md](notes/inbound-from-hycom-2026-09.md).
-- **Eli's next task here (as of 2026-09-23): issue #21**, the append pitfall from the CEFI
-  audit. Everything is in the issue.
+- **In progress: issue #21**, the append pitfall from the CEFI audit. Branch
+  `issue-21-append-alignment` exists locally with no commits; no skill edits made yet.
+  Decisions Eli agreed on 2026-09-24:
+  - **Recommend a guard**: refuse append/region writes unless the existing length and
+    every piece but the last are whole multiples of the chunk. When sources fail it,
+    the options are to leave the variables out (Earthmover's choice), keep one array
+    per file, materialize, or ask the provider to rechunk.
+  - **Variable-length (rectilinear) chunks are "watch", not an option**: zarr-extensions#74
+    shows the spec cannot express a padded HDF5 edge chunk mid-array, and CEFI's are
+    padded and zlib-compressed. VirtualiZarr #12 / PR #954 still open.
+  - **Placement**: a `SKILL.md` known trap, the guard in `current-workflow.md` step 9 and
+    `smoke-test-notebook.md` step 8, a `known-issues.md` row, and a file-boundary value
+    check in `validation.md`.
+  - **Verified by running** (clean venv, VirtualiZarr 2.7.3 / Icechunk 2.2.2 / zarr 3.4.0,
+    synthetic 2×365-step files, chunk 100): concat refuses; append accepts and puts 430
+    of 730 values in the wrong place; `region=` refuses a misaligned start. So the HYCOM
+    skeleton-plus-region pattern is protected.
+- **Eli to post the upstream VirtualiZarr issue** (drafted 2026-09-24, not yet posted).
+  The draft and its repro are in `~/tmp/claude-1000/`
+  (`virtualizarr-append-issue.md`, `virtualizarr-append-repro.py`). Read it, then:
+
+  ```bash
+  gh issue create -R zarr-developers/VirtualiZarr \
+    --title "to_icechunk(append_dim=...) silently misplaces data when the existing length isn't a multiple of the chunk size" \
+    --body-file ~/tmp/claude-1000/virtualizarr-append-issue.md
+  ```
+
+  Then give the issue number to the session writing the #21 skill changes, which should
+  cite it.
 - **Also open: #11, "add info on /tmp"**, filed 2026-09-04 by a hub
   admin, not by Eli. It asks that guidance mention copying data to `/tmp` because
   `$HOME` and `~/shared` are slow on this JupyterHub. It is about repo-level
