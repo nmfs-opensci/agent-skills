@@ -34,7 +34,9 @@ current before writing it in.
 - **Skeleton plus `region=` writes** for a regular combine axis with gaps: write the
   full-length coordinates and empty science arrays once, then references per batch with
   `to_icechunk(region={"time": slice(a, b)})`. Restartable in any order, and the loaded
-  coordinates stay in one chunk (appending adds a chunk per batch).
+  coordinates stay in one chunk (appending adds a chunk per batch). A misaligned region
+  start is refused by VirtualiZarr 2.7.3 (verified 2026-09-24; see
+  `append-alignment-issue-21.md`), so this pattern is safe from the #21 pitfall.
 - **Declare big-endian data as native dtype plus `bytes(endian=big)`**, not `>i2`: with `>i2`
   VirtualiZarr 2.7.3 refuses every later region/append write ("inconsistent dtypes: int16 vs
   >i2"). Probably an upstream bug in `check_same_dtypes`; unreported.
