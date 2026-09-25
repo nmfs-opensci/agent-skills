@@ -11,14 +11,16 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   (browser-access) on 2026-09-04, #13 (OA lessons, issue #12) and #15 (repo
   rename, issue #14) on 2026-09-18; #19 (a scratch-prefix test always gets a viewer
   and a short README, issue #18) on 2026-09-19, opened from the HYCOM session in a
-  separate worktree. All squash-merged, branches deleted, issues auto-closed.
+  separate worktree; #24 (new `litellm-bedrock-gateway` skill, issue #22) on
+  2026-09-25. All squash-merged, branches deleted, issues auto-closed.
 - **Lessons from the HYCOM build are waiting for a Learn pass**, including two places
   where the skill is wrong (`to_icechunk(encoding=...)` does not exist in VirtualiZarr
   2.7.3; `chunks={}` breaks down at millions of chunks):
   [notes/inbound-from-hycom-2026-09.md](notes/inbound-from-hycom-2026-09.md).
 - **In progress: issue #21**, the append pitfall from the CEFI audit. Decisions are
-  made and the failure is verified by running; no skill edits yet. Branch
-  `issue-21-append-alignment` exists locally with no commits. Everything is in
+  made and the failure is verified by running; no skill edits yet. No branch
+  (the empty `issue-21-append-alignment` was deleted 2026-09-25; branch again
+  from `main`). Everything is in
   [notes/append-alignment-issue-21.md](notes/append-alignment-issue-21.md).
 - **Eli to post the upstream VirtualiZarr issue** (drafted 2026-09-24, not yet posted).
   The draft and its repro are in `~/tmp/claude-1000/`
@@ -32,17 +34,21 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
 
   Then give the issue number to the session writing the #21 skill changes, which should
   cite it.
-- **Also open: #20, "LiteLLM"** (Eli, 2026-09-23): a Claude Code → LiteLLM → Bedrock
-  gateway on AWS for a ~20-person workshop. Infrastructure, not a catalog skill; may
-  belong in another repo. Nothing done.
+- **Also open: #23**, a skill that checks a repo's license, reuse statement and
+  citation file (Eli, 2026-09-25). Nothing done.
+- #20 ("LiteLLM") no longer exists here: it was transferred to
+  `nmfs-opensci/agent-coders-clinics` as issue #1 (closed). The reusable part
+  became the `litellm-bedrock-gateway` skill (#22 → PR #24):
+  [notes/litellm-bedrock-gateway-skill.md](notes/litellm-bedrock-gateway-skill.md).
+  Follow-ups for the clinics repo are in agent-coders-clinics#8.
 - **Also open: #11, "add info on /tmp"**, filed 2026-09-04 by a hub
   admin, not by Eli. It asks that guidance mention copying data to `/tmp` because
   `$HOME` and `~/shared` are slow on this JupyterHub. It is about repo-level
   agent guidance (`AGENTS.md`), not about the skill, and nothing has been done
   with it. Ask before acting.
 - This is the **shared skill catalog**, not a working project. Skills live at
-  `skills/<name>/`, evaluations separately at `evals/<name>/`. One skill so far:
-  `virtual-icechunk` (Experimental).
+  `skills/<name>/`, evaluations separately at `evals/<name>/`. Two skills, both
+  Experimental: `virtual-icechunk` and `litellm-bedrock-gateway`.
 - `docs/virtual-icechunk-patterns.md` is the prior provisional analysis of the
   three reference repositories. It is the evidence base the skill was built
   from — read it before changing the skill's technical claims. It is a snapshot
@@ -90,6 +96,12 @@ deliberate step that has happened once (PR #13) and will need doing again.
 
 ## Recent work
 
+- **2026-09-25 — added the `litellm-bedrock-gateway` skill** (issue #22 → PR #24).
+  A self-contained copy of the clinics gateway, now its source of truth, with one
+  model list (`models.yaml`) and config in Parameter Store. Tested end to end in a
+  throwaway stack. Found that LiteLLM keys without a `user_id` can read each
+  other's details; the skill sets one.
+  [notes/litellm-bedrock-gateway-skill.md](notes/litellm-bedrock-gateway-skill.md).
 - **2026-09-18 — folded the OA-indicators build and earth-mover corrections
   into the skill** (issue #12 → PR #13). The skill had been asserting that no
   virtual store was ever rendered in a browser; one was, and the matching
@@ -152,6 +164,9 @@ Not a task list — context for whatever comes up. Ask before acting on any of i
 
 ## Notes
 
+- [litellm-bedrock-gateway-skill.md](notes/litellm-bedrock-gateway-skill.md) —
+  Eli's decisions for the gateway skill, why config lives in SSM, the `user_id`
+  finding, what is untested
 - [append-alignment-issue-21.md](notes/append-alignment-issue-21.md) — #21 decisions,
   the verified repro, and why VirtualiZarr's append misplaces data
 - [virtual-icechunk-skill.md](notes/virtual-icechunk-skill.md) — why the skill
