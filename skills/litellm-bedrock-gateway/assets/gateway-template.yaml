@@ -1,0 +1,273 @@
+AWSTemplateFormatVersion: "2010-09-09"
+# Source template. scripts/render.py fills the @@...@@ marker from models.yaml
+# and writes build/gateway.yaml; deploy that, never this file.
+Description: >
+  LiteLLM gateway to Amazon Bedrock: one EC2 instance running LiteLLM, Postgres
+  and Caddy in Docker. Participants call it over HTTPS with LiteLLM virtual
+  keys; the only AWS credential is the instance role. Secrets and the LiteLLM
+  and Caddy configs live in SSM Parameter Store under /<stack name>/.
+
+Parameters:
+  LiteLLMImage:
+    Type: String
+    # v1.102.1, pinned by digest (multi-arch index; includes arm64).
+    Default: ghcr.io/berriai/litellm-database:v1.102.1@sha256:c38fe5eff11874941a21f5630ceb842f640dee7d5d5cde440b60ed0a71798f33
+  CaddyImage:
+    Type: String
+    # 2.11.4, pinned by digest (multi-arch; includes arm64).
+    Default: public.ecr.aws/docker/library/caddy:2.11.4-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b
+  PostgresImage:
+    Type: String
+    # 16-alpine, pinned by digest (multi-arch; includes arm64).
+    Default: public.ecr.aws/docker/library/postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+  DomainName:
+    Type: String
+    Default: ""
+    Description: >
+      Optional host name for HTTPS, with a DNS A record pointing at the Elastic
+      IP. Empty means <elastic ip>.sslip.io, which needs no domain.
+  InstanceType:
+    Type: String
+    Default: t4g.small
+    Description: Must be an arm64 (Graviton) type to match the AMI.
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+
+Conditions:
+  HasDomain: !Not [!Equals [!Ref DomainName, ""]]
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.42.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: !Ref AWS::StackName }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.42.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      # A public address lets the instance reach Bedrock, SSM and the image
+      # registries without a NAT gateway.
+      MapPublicIpOnLaunch: true
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref RouteTable
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Inbound HTTPS (and HTTP for certificate issue); outbound HTTPS only
+      VpcId: !Ref Vpc
+      # Caddy answers here; every API call still needs a LiteLLM key.
+      # Port 80 serves the Let's Encrypt challenge and redirects to HTTPS.
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: bedrock-and-config
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Exactly the models in models.yaml, written by scripts/render.py.
+              # An inference profile needs both the profile and the underlying
+              # model in every Region the profile routes to.
+              - Sid: InvokeServedModels
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource:
+                  # @@MODEL_RESOURCES@@
+              - Sid: ReadOwnSecretsAndConfig
+                Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/*
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+          # 2 hops so the LiteLLM container can get the instance role's credentials.
+          HttpPutResponseHopLimit: 2
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: 20
+              VolumeType: gp3
+              Encrypted: true
+              DeleteOnTermination: true
+
+  # A fixed address, so the HTTPS name survives stop/start. It is charged
+  # while the instance is stopped, too; teardown releases it.
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    DependsOn: GatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags: [{ Key: Name, Value: !Ref AWS::StackName }]
+
+  ElasticIpAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      InstanceId: !Ref Instance
+
+  Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: DefaultRoute
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds: [!Ref InstanceSecurityGroup]
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      Tags: [{ Key: Name, Value: !Ref AWS::StackName }]
+      # User data runs once, at first boot, and never changes with models:
+      # the LiteLLM config and Caddyfile are read from Parameter Store by
+      # /opt/litellm/refresh.sh, which scripts/deploy.sh reruns over SSM.
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            # Output goes to /var/log/litellm-setup.log; secret values are only
+            # written to root-only env files, never logged.
+            set -euo pipefail
+            exec > >(tee -a /var/log/litellm-setup.log) 2>&1
+            dnf install -y docker
+            systemctl enable --now docker
+            mkdir -p /opt/litellm/pgdata /opt/litellm/caddy
+            cd /opt/litellm
+
+            get() {
+              aws ssm get-parameter --region ${AWS::Region} --with-decryption \
+                --name "/${AWS::StackName}/$1" --query Parameter.Value --output text
+            }
+            MASTER=$(get master-key)
+            DBPW=$(get db-password)
+            SALT=$(get salt-key)
+            UIPW=$(get ui-password)
+
+            umask 077
+            printf 'POSTGRES_USER=litellm\nPOSTGRES_PASSWORD=%s\nPOSTGRES_DB=litellm\n' "$DBPW" > db.env
+            printf 'LITELLM_MASTER_KEY=%s\nLITELLM_SALT_KEY=%s\nDATABASE_URL=postgresql://litellm:%s@db:5432/litellm\nAWS_REGION=${AWS::Region}\n' \
+              "$MASTER" "$SALT" "$DBPW" > litellm.env
+            # Admin UI login: its own password, so the master key is never typed in a browser.
+            printf 'UI_USERNAME=admin\nUI_PASSWORD=%s\nPROXY_BASE_URL=https://${Hostname}\n' "$UIPW" >> litellm.env
+            unset MASTER DBPW SALT UIPW
+            umask 022
+
+            # Fetches config.yaml and Caddyfile, writing them in place (they are
+            # bind-mounted files), then restarts whatever is already running.
+            cat > refresh.sh <<'REFRESH'
+            #!/bin/bash
+            set -euo pipefail
+            cd /opt/litellm
+            get() {
+              aws ssm get-parameter --region ${AWS::Region} \
+                --name "/${AWS::StackName}/$1" --query Parameter.Value --output text
+            }
+            get litellm-config > config.yaml.new
+            get caddyfile > Caddyfile.new
+            cat config.yaml.new > config.yaml && rm config.yaml.new
+            cat Caddyfile.new > Caddyfile && rm Caddyfile.new
+            for c in litellm caddy; do
+              if docker ps -q -f name="^$c$" | grep -q .; then docker restart "$c" >/dev/null; fi
+            done
+            echo "refresh: done"
+            REFRESH
+            chmod 700 refresh.sh
+            ./refresh.sh
+
+            docker network create litellm || true
+            docker run -d --name db --restart unless-stopped --network litellm \
+              --env-file db.env -v /opt/litellm/pgdata:/var/lib/postgresql/data \
+              ${PostgresImage}
+            until docker exec db pg_isready -U litellm; do sleep 2; done
+            docker run -d --name litellm --restart unless-stopped --network litellm \
+              --env-file litellm.env -v /opt/litellm/config.yaml:/app/config.yaml:ro \
+              -p 127.0.0.1:4000:4000 \
+              ${LiteLLMImage} --config /app/config.yaml --port 4000
+
+            # HTTPS in front of LiteLLM. Caddy gets and renews the certificate
+            # itself; the Elastic IP may attach a few seconds after boot, and
+            # Caddy retries.
+            docker run -d --name caddy --restart unless-stopped --network litellm \
+              -p 80:80 -p 443:443 -e GATEWAY_HOST=${Hostname} \
+              -v /opt/litellm/Caddyfile:/etc/caddy/Caddyfile:ro -v /opt/litellm/caddy:/data \
+              ${CaddyImage}
+            echo "litellm-setup: done"
+          - Hostname: !If [HasDomain, !Ref DomainName, !Sub "${ElasticIp}.sslip.io"]
+
+Outputs:
+  InstanceId:
+    Value: !Ref Instance
+    Description: Target for SSM commands and scripts/tunnel.sh
+  GatewayUrl:
+    Value: !Sub
+      - https://${Hostname}
+      - Hostname: !If [HasDomain, !Ref DomainName, !Sub "${ElasticIp}.sslip.io"]
+    Description: The URL participants use; Admin UI at /ui

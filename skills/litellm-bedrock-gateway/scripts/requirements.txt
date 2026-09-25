@@ -1,0 +1,5 @@
+# For the gateway scripts. boto3's crt extra is needed to read credentials
+# made by `aws login`.
+boto3[crt]>=1.40
+requests>=2.32
+pyyaml>=6.0

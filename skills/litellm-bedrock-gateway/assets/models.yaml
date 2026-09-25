@@ -1,0 +1,99 @@
+# The one list of models the gateway serves. scripts/render.py turns it into
+# the instance role's IAM statement, LiteLLM's model_list, and the model table
+# in the participant quickstart. Edit only this file, then run scripts/deploy.sh.
+#
+# Verify every ID in the target account and Region before deploying (they are
+# not guessable): `python scripts/inspect_account.py`. Prices are USD per
+# million tokens, on-demand, for the Region below: take them from the AWS Pricing
+# API, not from memory. This list was verified in us-east-2 on 2026-09-25.
+region: us-east-2
+
+# Model the quickstart makes the default for every tool.
+default: claude-haiku-4-5-20251001
+
+models:
+  # Claude: named by Anthropic API IDs so Claude Code shows real names, context
+  # sizes and prices. Called through a geographic inference profile (`us.`).
+  # LiteLLM prices these from its own cost map, which knows the prompt-cache
+  # write and read rates; the prices here only feed the quickstart's table.
+  # `cache: true` adds cache markers for OpenAI-style clients (LiteLLM stands
+  # down when the client sets its own, as Claude Code does).
+  - name: claude-haiku-4-5-20251001
+    label: Claude Haiku 4.5
+    bedrock_id: anthropic.claude-haiku-4-5-20251001-v1:0
+    inference_profile: us
+    api: invoke
+    cache: true
+    claude_code_tier: haiku
+    input_price: 1.10
+    output_price: 5.50
+  - name: claude-sonnet-4-6
+    label: Claude Sonnet 4.6
+    bedrock_id: anthropic.claude-sonnet-4-6
+    inference_profile: us
+    api: invoke
+    cache: true
+    claude_code_tier: sonnet
+    input_price: 3.30
+    output_price: 16.50
+  - name: claude-opus-4-6
+    label: Claude Opus 4.6 (strongest)
+    bedrock_id: anthropic.claude-opus-4-6-v1
+    inference_profile: us
+    api: invoke
+    cache: true
+    claude_code_tier: opus
+    input_price: 5.50
+    output_price: 27.50
+
+  # Open coding models through the Converse API. LiteLLM's cost map lacked
+  # several of these for us-east-2, so the prices here are passed to LiteLLM;
+  # without them spend records $0 and budgets do nothing.
+  - name: qwen3-coder-480b
+    label: Qwen3 Coder 480B
+    bedrock_id: qwen.qwen3-coder-480b-a35b-v1:0
+    api: converse
+    input_price: 0.45
+    output_price: 1.80
+  - name: qwen3-coder-30b
+    label: Qwen3 Coder 30B (small, fast)
+    bedrock_id: qwen.qwen3-coder-30b-a3b-v1:0
+    api: converse
+    input_price: 0.15
+    output_price: 0.60
+  - name: devstral-2
+    label: Mistral Devstral 2
+    bedrock_id: mistral.devstral-2-123b
+    api: converse
+    input_price: 0.40
+    output_price: 2.00
+  - name: kimi-k2.5
+    label: Kimi K2.5
+    bedrock_id: moonshotai.kimi-k2.5
+    api: converse
+    input_price: 0.60
+    output_price: 3.00
+  - name: glm-5
+    label: GLM 5
+    bedrock_id: zai.glm-5
+    api: converse
+    input_price: 1.00
+    output_price: 3.20
+  - name: minimax-m2.5
+    label: MiniMax M2.5
+    bedrock_id: minimax.minimax-m2.5
+    api: converse
+    input_price: 0.30
+    output_price: 1.20
+  - name: deepseek-v3.2
+    label: DeepSeek V3.2
+    bedrock_id: deepseek.v3.2
+    api: converse
+    input_price: 0.62
+    output_price: 1.85
+  - name: gpt-oss-120b
+    label: OpenAI GPT-OSS 120B
+    bedrock_id: openai.gpt-oss-120b-1:0
+    api: converse
+    input_price: 0.15
+    output_price: 0.60
