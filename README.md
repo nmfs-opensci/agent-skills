@@ -9,6 +9,7 @@ across repositories and GitHub organizations.
 
 | Skill | Description | Status | Maintainer |
 | --- | --- | --- | --- |
+| [litellm-bedrock-gateway](skills/litellm-bedrock-gateway/) | Deploy, verify, run, and tear down a LiteLLM gateway on AWS so workshop participants can use coding agents with Amazon Bedrock models through personal keys with budgets and expiry. | Experimental | [@eeholmes](https://github.com/eeholmes) |
 | [virtual-icechunk](skills/virtual-icechunk/) | Research, build, validate, document, and audit virtual Icechunk stores that reference remote NetCDF/HDF5 files in place. | Experimental | [@eeholmes](https://github.com/eeholmes) |
 
 A skill is added to this table only when its directory and valid `SKILL.md`
