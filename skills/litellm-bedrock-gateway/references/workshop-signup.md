@@ -103,4 +103,6 @@ a new master key, rebuild and teardown. The master key controls every key on the
 gateway: send it once, privately. **Rotating it has not been worked out** for
 this template: the instance writes its env files at first boot only, and
 `make_secrets.py` never overwrites. Until it has, a leaked master key means
-blocking what was misused and, at worst, a rebuild.
+blocking what was misused and, at worst, a rebuild. Giving the organizer a
+revocable admin key of their own instead is proposed, not built
+(nmfs-opensci/agent-skills#27).
