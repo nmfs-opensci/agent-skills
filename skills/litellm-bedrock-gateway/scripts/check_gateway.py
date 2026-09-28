@@ -13,7 +13,7 @@ Checks, over HTTPS:
   - the test key can read its own balance and has a user_id; with --other, it
     cannot read that other key's details
   - the Admin UI is reachable or blocked, as GATEWAY_ADMIN_UI says
-  - the workshop key service answers, and refuses sign-up while closed
+  - the workshop key service answers, and its admin route refuses no key and the test key
   - every served model answers a tool-use request, in both the OpenAI format
     (OpenCode, Copilot CLI) and the Anthropic format (Claude Code)
   - with --spend: after LiteLLM's ~1 minute write delay, each model's calls
@@ -31,7 +31,7 @@ import time
 
 import requests
 
-from keys import gateway_url, master_key
+from keys import admin_key, gateway_url
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TOOL_PROMPT = "What is the weather in Paris? Use the get_weather tool."
@@ -110,7 +110,9 @@ def main():
     r = requests.get(f"{url}/workshop/health", timeout=30)
     check("workshop key service answers", r.ok, f"HTTP {r.status_code}")
     r = requests.get(f"{url}/workshop/admin", timeout=30)
-    check("workshop admin refuses without the master key", r.status_code == 404, f"HTTP {r.status_code}")
+    check("workshop admin refuses without an admin key", r.status_code == 404, f"HTTP {r.status_code}")
+    r = requests.get(f"{url}/workshop/admin", headers=headers, timeout=30)
+    check("workshop admin refuses a participant key", r.status_code == 404, f"HTTP {r.status_code}")
 
     served = [m["id"] for m in requests.get(f"{url}/v1/models", headers=headers, timeout=30).json()["data"]]
     for model in args.models or served:
@@ -121,9 +123,9 @@ def main():
     if args.spend and token:
         print("  waiting 75 s for LiteLLM to write spend ...")
         time.sleep(75)
-        master = master_key(stack)
+        admin = admin_key(stack)
         rows = requests.get(f"{url}/spend/logs", params={"api_key": token}, timeout=60,
-                            headers={"Authorization": f"Bearer {master}"}).json()
+                            headers={"Authorization": f"Bearer {admin}"}).json()
         by_model = {}
         for row in rows if isinstance(rows, list) else []:
             name = row.get("model_group") or row.get("model")

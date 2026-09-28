@@ -56,7 +56,9 @@ settings in `~/.claude`.
 - **"That workshop code is not right"**: check the code and try again.
 - **"A key for ... was already issued"**: you, or someone using your name,
   already signed up. Ask {{ORGANIZER}}.
-- **"All workshop keys are handed out"** or **"sign-up is closed"**: ask
-  {{ORGANIZER}}.
+- **"All workshop keys are handed out"**, **"sign-up is closed"** or **"has
+  ended"**: ask {{ORGANIZER}}.
+- **A new workshop, and you still have a key from an earlier one**: run
+  `{{HUB_COMMAND}} --reset`, then `{{HUB_COMMAND}}` and type the new code.
 - **"not set up yet"** or **"Could not reach the workshop gateway"**: the
   gateway is not ready or is stopped. Ask {{ORGANIZER}}.

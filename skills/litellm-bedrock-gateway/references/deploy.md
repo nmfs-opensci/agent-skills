@@ -58,6 +58,11 @@ instance is never replaced for a model change. Never edit
 `/opt/litellm/config.yaml` on the instance by hand: the next deploy overwrites
 it, and until then the running gateway and `models.yaml` disagree.
 
+`refresh.sh` itself is written by user data, so it too is fixed at first boot.
+Since 2026-09-28 `deploy.sh` stores the key service gzipped (Parameter Store
+stops at 8 KB); a gateway built from an older copy of the template cannot read
+that, and needs a rebuild to take a newer key service.
+
 Changing `GATEWAY_DOMAIN` changes user data (the host name LiteLLM and Caddy are
 told at first boot). CloudFormation documents a user-data change as an update
 with interruption (stop and start), and user data does not rerun, so the new

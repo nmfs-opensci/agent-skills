@@ -60,3 +60,9 @@ account.)
 
 > The gateway is in our IT group's AWS account and I'm not allowed in it. I'm
 > running the workshop. What do I need from them, and how do I manage keys?
+
+## 11. Two workshops, and a lost organizer key
+
+> Next week Maria and Lee each run their own workshop on our gateway, at the
+> same time. Neither has AWS access. Also, Maria's laptop was just stolen and
+> her organizer key was on it. What do we do?

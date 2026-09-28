@@ -50,7 +50,9 @@ json() {  # json FIELD < response: print one field of a JSON reply
 
 case "${1:-}" in
   --reset)
-    rm -f "$KEYFILE"; echo "Forgot your key. Ask {{ORGANIZER}} before signing up again."; exit 0 ;;
+    rm -f "$KEYFILE"
+    echo "Forgot your key. For a new workshop, run $CMD and type its code;"
+    echo "to sign up again for the same one, ask {{ORGANIZER}} first."; exit 0 ;;
   --budget)
     [ -s "$KEYFILE" ] || { echo "No key yet: run $CMD first."; exit 1; }
     curl -fsS "$GATEWAY_URL/key/info" -H "Authorization: Bearer $(tr -d '[:space:]' < "$KEYFILE")" | python3 -c '
@@ -74,7 +76,7 @@ if [ ! -s "$KEYFILE" ]; then
   fi
   mkdir -p "$DIR"
   (umask 077; printf '%s\n' "$key" > "$KEYFILE")
-  echo "Got your key for $user: \$$(json budget <<<"$reply") to spend, expires $(json expires <<<"$reply" | cut -c1-10)."
+  echo "Got your key for $user (workshop $(json workshop <<<"$reply")): \$$(json budget <<<"$reply") to spend, expires $(json expires <<<"$reply" | cut -c1-10)."
 fi
 
 if ! command -v claude >/dev/null; then

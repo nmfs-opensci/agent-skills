@@ -6,12 +6,18 @@ instance's refresh.sh installs it. Participants (through the hub script):
 
   POST /workshop/key    {"code": "...", "user": "<hub username>"}
 
-creates key alias ws-<user> (also its user_id) with the workshop budget and expiry. It never
-returns a key that already exists, so a public username is not enough to get
-someone's key. The organizer opens and closes sign-up with the master key
-(scripts/workshop.py):
+The code picks the workshop: several can be open at once, each with its own
+code, key cap, budget and expiry. It creates key alias ws-<workshop>-<user>
+(also its user_id, and metadata.workshop) with that workshop's budget and
+expiry. It never returns a key that already exists, so a public username is not
+enough to get someone's key. Organizers open and close workshops
+(scripts/workshop.py) with an admin key: the master key, or a key whose LiteLLM
+user has the proxy_admin role, checked with LiteLLM on every request so a
+revoked key stops working at once:
 
-  GET|POST /workshop/admin    {"code", "max_keys", "open_until", "budget", "days"}
+  GET  /workshop/admin    every workshop's settings and issued count (no codes)
+  POST /workshop/admin    {"workshop", "code", "max_keys", "open_until", "budget", "days"}
+                          (an empty code closes that workshop)
 
 Settings live in STATE_FILE, so a restart keeps them. One request at a time,
 which keeps the key count exact and makes guessing the code slow. Logs name
@@ -34,15 +40,19 @@ MASTER = os.environ["LITELLM_MASTER_KEY"]
 STATE_FILE = os.environ.get("STATE_FILE", "/state/workshop.json")
 PREFIX = "ws-"
 USER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,38}$")  # GitHub username rules
-CLOSED = {"code": "", "max_keys": 0, "open_until": "", "budget": 20.0, "days": 7}
+# No hyphen, so ws-<workshop>-<user> can be read back unambiguously.
+WORKSHOP_RE = re.compile(r"^[a-z0-9]{1,20}$")
+CLOSED = {"code": "", "max_keys": 0, "open_until": "", "budget": 20.0, "days": 7, "opened_by": ""}
 
 
 def load_state():
+    """{"workshops": {name: settings}}. A state file from before named workshops is ignored."""
     try:
         with open(STATE_FILE) as f:
-            return {**CLOSED, **json.load(f)}
+            workshops = json.load(f).get("workshops", {})
     except FileNotFoundError:
-        return dict(CLOSED)
+        workshops = {}
+    return {"workshops": {n: {**CLOSED, **w} for n, w in workshops.items()}}
 
 
 def save_state(state):
@@ -52,32 +62,36 @@ def save_state(state):
     os.replace(tmp, STATE_FILE)
 
 
-def litellm(method, path, body=None):
+def litellm(method, path, body=None, key=MASTER, timeout=30):
     req = urllib.request.Request(
         LITELLM + path, method=method,
         data=json.dumps(body).encode() if body is not None else None,
-        headers={"Authorization": f"Bearer {MASTER}", "Content-Type": "application/json"},
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=30) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.load(r)
 
 
-def workshop_aliases():
-    aliases, page = set(), 1
+def workshop_keys():
+    """{workshop name: set of aliases} for every key sign-up has issued."""
+    issued, page = {}, 1
     while True:
         data = litellm("GET", f"/key/list?return_full_object=true&size=100&page={page}")
-        aliases |= {k.get("key_alias") or "" for k in data.get("keys", [])}
+        for k in data.get("keys", []):
+            name = (k.get("metadata") or {}).get("workshop")
+            if name and (k.get("key_alias") or "").startswith(PREFIX):
+                issued.setdefault(name, set()).add(k["key_alias"])
         if page >= (data.get("total_pages") or 1):
-            return {a for a in aliases if a.startswith(PREFIX)}
+            return issued
         page += 1
 
 
-def closed_reason(state, now):
-    if not state["code"]:
-        return "Workshop sign-up is closed."
-    if state["open_until"] and now > dt.datetime.fromisoformat(state["open_until"]):
-        return "Workshop sign-up has ended."
-    return None
+def is_open(w, now):
+    return bool(w["code"]) and not (w["open_until"] and now > dt.datetime.fromisoformat(w["open_until"]))
+
+
+def same_code(a, b):
+    return hmac.compare_digest(a.strip().lower().encode(), b.strip().lower().encode())
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -97,15 +111,38 @@ class Handler(BaseHTTPRequestHandler):
             raise ValueError("request too large")
         return json.loads(self.rfile.read(n) or b"{}")
 
-    def is_admin(self):
+    def admin(self):
+        """Who is asking, if an admin: "master", the proxy_admin user's id, or None.
+
+        Asks LiteLLM every time (no cache), so a blocked or deleted organizer
+        key is refused at once. Admin calls are rare; the short timeout keeps a
+        slow answer from holding up sign-up, which is served one at a time.
+        """
         auth = self.headers.get("Authorization", "")
-        return hmac.compare_digest(auth.encode(), f"Bearer {MASTER}".encode())
+        if hmac.compare_digest(auth.encode(), f"Bearer {MASTER}".encode()):
+            return "master"
+        key = auth.removeprefix("Bearer ").strip()
+        if not key.startswith("sk-"):
+            return None
+        try:
+            info = litellm("GET", "/user/info", key=key, timeout=5)
+            if info.get("user_info", {}).get("user_role") == "proxy_admin":
+                return info.get("user_id") or "admin"
+        except (OSError, ValueError):  # refused (401: bad, blocked or expired key) or unreachable
+            pass
+        time.sleep(1)  # as for a wrong workshop code: makes guessing slow
+        log("admin: key refused")
+        return None
 
     def do_GET(self):
         if self.path == "/workshop/health":
             return self.reply(200, ok=True)
-        if self.path == "/workshop/admin" and self.is_admin():
-            return self.reply(200, **load_state(), issued=sorted(workshop_aliases()))
+        if self.path == "/workshop/admin" and self.admin():
+            now, issued = dt.datetime.now(dt.timezone.utc), workshop_keys()
+            return self.reply(200, workshops={
+                name: {**{k: v for k, v in w.items() if k != "code"},
+                       "open": is_open(w, now), "issued": sorted(issued.get(name, ()))}
+                for name, w in sorted(load_state()["workshops"].items())})
         self.reply(404, error="Not found.")
 
     def do_POST(self):
@@ -113,11 +150,8 @@ class Handler(BaseHTTPRequestHandler):
             body = self.body()
         except ValueError:
             return self.reply(400, error="Bad request.")
-        if self.path == "/workshop/admin" and self.is_admin():
-            state = {**load_state(), **{k: body[k] for k in CLOSED if k in body}}
-            save_state(state)
-            log("admin: settings changed")
-            return self.reply(200, ok=True)
+        if self.path == "/workshop/admin" and (who := self.admin()):
+            return self.configure(body, who)
         if self.path == "/workshop/key":
             try:
                 return self.issue(body)
@@ -126,37 +160,60 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(502, error="The gateway could not create a key. Ask the organizer.")
         self.reply(404, error="Not found.")
 
+    def configure(self, body, who):
+        name = str(body.get("workshop", "")).strip().lower()
+        if not WORKSHOP_RE.match(name):
+            return self.reply(400, error="Workshop names are 1-20 lowercase letters and digits.")
+        state, now = load_state(), dt.datetime.now(dt.timezone.utc)
+        w = {**state["workshops"].get(name, CLOSED), **{k: body[k] for k in CLOSED if k in body}}
+        if w["code"] and any(n != name and is_open(o, now) and same_code(o["code"], w["code"])
+                             for n, o in state["workshops"].items()):
+            return self.reply(409, error="Another open workshop uses that code; choose another.")
+        if w["code"]:
+            w["opened_by"] = who
+        state["workshops"][name] = w
+        save_state(state)
+        log(f"admin {who}: workshop {name} {'opened or changed' if w['code'] else 'closed'}")
+        return self.reply(200, ok=True)
+
     def issue(self, body):
         state, now = load_state(), dt.datetime.now(dt.timezone.utc)
         user = str(body.get("user", "")).strip().lower()
-        if reason := closed_reason(state, now):
-            return self.reply(403, error=reason)
-        if not hmac.compare_digest(str(body.get("code", "")).strip().lower().encode(),
-                                   state["code"].strip().lower().encode()):
+        code = str(body.get("code", ""))
+        workshops = state["workshops"]
+        if not any(is_open(w, now) for w in workshops.values()):
+            return self.reply(403, error="Workshop sign-up is closed.")
+        matches = [n for n, w in workshops.items() if w["code"] and same_code(code, w["code"])]
+        live = [n for n in matches if is_open(workshops[n], now)]
+        if not live:
+            if matches:
+                return self.reply(403, error="Sign-up for that workshop has ended.")
             time.sleep(1)
             log(f"wrong code for {user[:40]!r}")
             return self.reply(403, error="That workshop code is not right.")
+        name, w = live[0], workshops[live[0]]
         if not USER_RE.match(user):
             return self.reply(400, error="That does not look like a hub username.")
-        alias = PREFIX + user
-        issued = workshop_aliases()
+        alias = f"{PREFIX}{name}-{user}"
+        issued = workshop_keys().get(name, set())
         if alias in issued:
-            log(f"{user}: already issued")
+            log(f"{name}/{user}: already issued")
             return self.reply(409, error=f"A key for {user} was already issued. "
                                          "If you lost it, ask the organizer.")
-        if len(issued) >= int(state["max_keys"]):
-            log(f"{user}: cap reached")
+        if len(issued) >= int(w["max_keys"]):
+            log(f"{name}/{user}: cap reached")
             return self.reply(403, error="All workshop keys are handed out. Ask the organizer.")
         key = litellm("POST", "/key/generate", {
             "key_alias": alias,
             # Without a user_id LiteLLM lets a key read other keys' details.
             "user_id": alias,
-            "max_budget": float(state["budget"]),
-            "duration": f"{int(state['days'])}d",
-            "metadata": {"purpose": "workshop", "hub_user": user},
+            "max_budget": float(w["budget"]),
+            "duration": f"{int(w['days'])}d",
+            "metadata": {"purpose": "workshop", "workshop": name, "hub_user": user},
         })
-        log(f"{user}: key issued ({len(issued) + 1} of {state['max_keys']})")
-        self.reply(200, key=key["key"], budget=float(state["budget"]), expires=key.get("expires"))
+        log(f"{name}/{user}: key issued ({len(issued) + 1} of {w['max_keys']})")
+        self.reply(200, key=key["key"], workshop=name, budget=float(w["budget"]),
+                   expires=key.get("expires"))
 
     def log_message(self, fmt, *args):  # keep the default access log out of the output
         pass

@@ -18,8 +18,11 @@ aws cloudformation describe-stacks --stack-name "$GATEWAY_STACK" >/dev/null 2>&1
 
 # Plain String parameters (no secrets in them). Intelligent-Tiering moves a
 # config over 4 KB to the Advanced tier ($0.05 a month) instead of failing.
+# Advanced parameters still stop at 8 KB, so the key service is stored gzipped
+# and base64-encoded; refresh.sh on the instance decodes it.
+gzip -9c assets/keyservice.py | base64 | tr -d "\n" > build/keyservice.py.gz.b64
 for p in litellm-config:build/litellm-config.yaml caddyfile:build/Caddyfile \
-         keyservice:assets/keyservice.py; do
+         keyservice:build/keyservice.py.gz.b64; do
   aws ssm put-parameter --name "/$GATEWAY_STACK/${p%%:*}" --type String \
     --tier Intelligent-Tiering --overwrite --value "file://${p#*:}" >/dev/null
   echo "stored   /$GATEWAY_STACK/${p%%:*}"

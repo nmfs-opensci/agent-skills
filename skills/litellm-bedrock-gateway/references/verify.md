@@ -17,7 +17,7 @@ It checks, over HTTPS: no key → 401; the key reads its own balance and has a
 `user_id`; it cannot read the other key's details (403 on `/key/info?key=`,
 empty on `/v2/key/info`); the Admin UI is reachable or blocked as
 `GATEWAY_ADMIN_UI` says; the workshop key service answers and its admin
-route refuses without the master key; every served model answers a tool-use request in both
+route refuses no key and a participant key; every served model answers a tool-use request in both
 the OpenAI format (OpenCode, Copilot CLI) and the Anthropic format (Claude
 Code); and, after LiteLLM's ~1 minute write delay, each model's calls were
 recorded at more than $0. Cost: a few cents.
@@ -93,3 +93,26 @@ got 409. A second `deploy.sh` refreshed the instance: the key service restarted
 with the stored code and kept its sign-up state. Teardown left nothing behind.
 Tested locally against a stub: wrong code, the key cap, and a missing `.url`
 file. Not tested: an interactive first start on a real hub account.
+
+## What was verified for organizer keys and named workshops (2026-09-28)
+
+In a throwaway stack in us-east-2, rebuilt from scratch with the scripts as
+shipped (issue #27). Probes first: a `proxy_admin` key listed, created,
+updated, blocked, unblocked and deleted keys, including the master key's; it
+could not log in to the Admin UI, add models, or regenerate keys; it could
+create more admins and call `/config/update`; blocked or deleted, it got 401
+at once. Then the scripts: `keys.py organizer create` made two organizers.
+Each, in its own folder with every AWS credential source disabled (instance
+metadata included), opened its own workshop; a second workshop with an open
+workshop's code got 409, a bad name 400. Sign-up: codes case-insensitive, the
+cap held per workshop, a repeat got 409, a wrong code and an admin call with a
+bogus or participant key each took ~1.2 s to refuse, and the same person got a
+key in each of two workshops. The rendered hub script signed a participant up
+(`ws-orca-gina`, message naming the workshop) and the real Claude Code answered
+through the gateway; `workshop.py status --workshop orca` showed its spend.
+An organizer blocked and deleted keys. `organizer revoke` stopped that
+organizer's key at once (key service 404, LiteLLM 401) while the other's kept
+working, and listed an admin the other had made directly, flagged.
+`check_gateway.py --other --spend` passed 42 of 42. `instance.sh refresh`
+decoded the gzipped key service and kept both workshops' state. Teardown
+left nothing behind (stack, parameters, Elastic IP).

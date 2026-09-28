@@ -103,6 +103,9 @@ Security choices and the reasons behind them: `references/security.md`.
 - **Organizers create every key and send it privately** (a direct message,
   never a shared channel or list), or participants get their own through
   workshop sign-up. Keys are per person: never share one.
+- **The master key and the Admin UI password never leave the installer.** An
+  organizer without AWS gets their own revocable admin key
+  (`keys.py organizer create`), never either of those: neither can be revoked.
 - **No committed file holds the gateway URL.** Install repos are often public;
   the URL lives in `secrets/gateway-url` and goes out privately.
 - **One list of models.** Change `models.yaml`, then `scripts/deploy.sh`. It

@@ -84,23 +84,49 @@ instructions. Eli's decisions:
 Verified in `gwskill-test-delete-me` (Greenfield) and torn down; details in the
 skill's `references/verify.md`.
 
-## Next: issue #27, and the order of the remaining gateway work
+## Organizer keys and named workshops (issue #27, 2026-09-28)
 
-Decided with Eli 2026-09-28: **A (#25, done) → #27 → B (template repo) → C
-(colleague's instructions)**. #27 goes before C because C tells the installer
-what to send the organizer: with #27 that is an organizer key, which can be
-revoked; without it, the master key, which cannot be taken back. B does not
-depend on #27.
+Order agreed with Eli: A (#25) → #27 → B (template repo) → C (colleague's
+instructions). #27 had to come before C, because C tells the installer what to
+send the organizer. B does not depend on #27.
 
-#27 in short (the issue has the list): the installer makes the organizer a
-LiteLLM key with the `proxy_admin` role; `keys.py`/`workshop.py` read it from
-`secrets/organizer-key`; the key service's `/workshop/admin` accepts admin-role
-keys, not only the master key. The first thing to find out, by running, is
-whether a `proxy_admin` key can list, create, update, block and delete keys on
-open-source LiteLLM 1.102.1. If it cannot, fall back to a master-key rotate
-command (move container start out of user data into a script on the instance
-so env files can be rewritten and containers recreated; Docker reads
-`--env-file` only at container creation).
+Settled by running on LiteLLM 1.102.1 before building: a `proxy_admin` key
+manages every key (including the master key's) and is refused at once when
+blocked or deleted; it **cannot** log in to the Admin UI; it **can** create more
+admins and call `/config/update`, and revoking it undoes neither. So the
+master-key-rotation fallback was not needed.
+
+Eli's decisions:
+
+- **No Admin UI password for an organizer without AWS**: it is as unrevocable
+  as the master key. The CLI covers what they need (Eli asked specifically that
+  they can see who has keys in their workshop and revoke them).
+- **Several workshops at once on one gateway** (Eli: "there could be multiple
+  workshops going on"), built into #27 rather than a separate issue: named
+  workshops, own code/cap/budget/expiry, keys `ws-<workshop>-<user>`. Every
+  admin key can still touch every workshop; the tools filter. True per-organizer
+  isolation (LiteLLM teams) was offered and not chosen.
+- **Key service asks LiteLLM on every admin request**, no cache, so revocation
+  is immediate.
+- **Revoke = delete key and user, then list every admin**, flagging ones not
+  made by `organizer create`. Config changes are documented as undetected.
+- **`secrets/organizer-key`, else the SSM master key.** `secrets/master-key` is
+  no longer read, so no doc tells anyone to put the master key in a file.
+
+Looks odd but is deliberate:
+
+- The key service is stored **gzipped and base64** in Parameter Store: with
+  named workshops it passed the 8 KB limit of Advanced parameters. `refresh.sh`
+  is written by user data, so a gateway built before this change cannot decode
+  it and needs a rebuild. Only throwaway stacks existed then.
+- Workshop names have **no hyphen**, so `ws-<workshop>-<user>` parses one way.
+- `organizer` subcommands always use the SSM master key, never an organizer
+  key, although an organizer key could technically create admins too.
+- LiteLLM's built-in `default_user_id` is a `proxy_admin` (appears after an
+  Admin UI login); `organizer list` labels it and it must never be revoked.
+
+Still open: rotating the master key itself (now less urgent); whether
+`CLAUDE_CODE_AUTO_MODE_SERVER` survives Claude Code updates.
 
 Test stack pattern that worked on 2026-09-28: `init_deployment.sh` into the
 scratchpad, a fresh venv (a moved venv breaks), `AWS_PROFILE=greenfield`,
@@ -109,3 +135,10 @@ service answers before LiteLLM on first boot, so `instance.sh health` can fail
 once with curl exit 52; retry. A fake hub participant is
 `env -i HOME=<empty dir> PATH=~/.local/bin:/usr/bin:/bin JUPYTERHUB_USER=<name>
 bash <shared>/<command>`, with the code on stdin.
+
+To test "no AWS access" on the hub, unsetting the profile is not enough: the
+hub node's instance role still answers through instance metadata. Also set
+`AWS_EC2_METADATA_DISABLED=true AWS_CONFIG_FILE=/nonexistent
+AWS_SHARED_CREDENTIALS_FILE=/nonexistent`, and confirm `aws sts
+get-caller-identity` fails. A foreground `sleep` is blocked in this harness;
+wait with an `until` loop on a real condition.

@@ -32,11 +32,13 @@ and, in the same private message, the gateway URL from `secrets/gateway-url`.
 
 On a JupyterHub, participants can get their own keys instead:
 `workshop.py open` and the hub script (`workshop-signup.md`). Those keys are
-named `ws-<hub username>`; `keys.py` lists, blocks and deletes them like any
-other, and deleting one lets that person sign up again.
+named `ws-<workshop>-<hub username>`; `workshop.py status --workshop <name>`
+lists one workshop's, and `keys.py` lists, blocks and deletes them like any
+other. Deleting one lets that person sign up again.
 
 An organizer without AWS access runs every command here from
-`secrets/gateway-url` and `secrets/master-key` (`workshop-signup.md`).
+`secrets/gateway-url` and their own organizer key in `secrets/organizer-key`,
+made by the installer with `keys.py organizer create` (`workshop-signup.md`).
 
 ## Changing, pausing, removing
 
@@ -62,8 +64,8 @@ breakdowns.
   batches.
 - **A budget is checked before each request**, so one request can overshoot a
   small budget slightly. Exceeding returns HTTP 429 "Budget has been exceeded".
-- For per-request detail (tokens, cache reads), `GET /spend/logs` with the
-  master key and no date parameters returns rows; with dates it returns daily
+- For per-request detail (tokens, cache reads), `GET /spend/logs` with an
+  admin key and no date parameters returns rows; with dates it returns daily
   totals only.
 
 ## What participants can see

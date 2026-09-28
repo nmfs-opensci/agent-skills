@@ -242,7 +242,7 @@ Resources:
             }
             get litellm-config > config.yaml.new
             get caddyfile > Caddyfile.new
-            get keyservice > keyservice.py.new
+            get keyservice | base64 -d | gunzip > keyservice.py.new  # stored gzipped (8 KB limit)
             cat config.yaml.new > config.yaml && rm config.yaml.new
             cat Caddyfile.new > Caddyfile && rm Caddyfile.new
             mkdir -p keyservice/state

@@ -18,8 +18,13 @@ it goes to people privately, with their key.
 ## Workshop sign-up on the JupyterHub
 
 People on the hub run `{{HUB_COMMAND}}`, type a code you say in the room, and
-get their own key: `ws-<hub username>`, ${{BUDGET}}, {{DAYS}} days. The
-participant page is `docs/hub-quickstart.md`.
+get their own key: `ws-<workshop>-<hub username>`, ${{BUDGET}}, {{DAYS}} days.
+The participant page is `docs/hub-quickstart.md`.
+
+Several workshops can run on this gateway at once. Each has a name (lowercase
+letters and digits, e.g. `whale`) and its own code, cap, budget and expiry; the
+code a participant types decides which workshop they join. Every organizer can
+see and change every workshop, so agree on names with the others.
 
 **Once per hub** (and again after the script changes or the gateway URL
 changes), copy the script and the URL into the hub's shared folder:
@@ -32,21 +37,26 @@ cp secrets/gateway-url {{HUB_ADMIN_DIR}}/{{HUB_COMMAND}}.url
 Participants run it as `{{HUB_DIR}}/{{HUB_COMMAND}}`. Use a folder
 participants can read but not change.
 
-**When the workshop starts** (the code is not case-sensitive):
+**When the workshop starts** (the code is not case-sensitive, and must differ
+from any other open workshop's):
 
 ```bash
-python scripts/workshop.py open --code whale-2026 --hours 4
-python scripts/workshop.py status
-python scripts/workshop.py close
+python scripts/workshop.py open --workshop whale --code whale-2026 --hours 4
+python scripts/workshop.py status --workshop whale
+python scripts/workshop.py close --workshop whale
 ```
 
 `open` defaults to ${{BUDGET}} per key, {{DAYS}} days and at most
 {{MAX_KEYS}} keys; `--budget`, `--days` and `--max` change them. Sign-up also
-ends by itself after `--hours`. `status` lists who has a key. If someone lost
-their key or took the wrong name, delete it and they can sign up again:
+ends by itself after `--hours`. `status --workshop whale` lists who has a key
+in that workshop, with spend, budget, expiry and whether it is blocked;
+`status` alone gives one line per workshop. To stop someone, block or delete
+their key. If someone lost their key or took the wrong name, delete it and they
+can sign up again:
 
 ```bash
-python scripts/keys.py delete ws-their-username
+python scripts/keys.py block ws-whale-their-username
+python scripts/keys.py delete ws-whale-their-username
 ```
 
 ## Give someone a key by hand
@@ -72,8 +82,9 @@ python scripts/keys.py list
 
 Spend appears about a minute after each request.
 
-Or the **Admin UI**: `<gateway URL>/ui`, user `admin`. The password comes from
-the installer, or, with AWS access:
+Or, with AWS access, the **Admin UI**: `<gateway URL>/ui`, user `admin`, with
+the password from Parameter Store. It is not given to organizers without AWS:
+like the master key, it cannot be revoked.
 
 ```bash
 aws ssm get-parameter --name /{{STACK}}/ui-password \
@@ -91,6 +102,9 @@ python scripts/keys.py delete someone
 ## Installer only (needs AWS)
 
 ```bash
+python scripts/keys.py organizer create maria   # admin key for an organizer without AWS
+python scripts/keys.py organizer list           # every admin and its keys
+python scripts/keys.py organizer revoke maria   # stop it at once
 scripts/instance.sh stop     # about $5 a month while stopped
 scripts/instance.sh start
 scripts/deploy.sh            # after changing models.yaml or gateway.env

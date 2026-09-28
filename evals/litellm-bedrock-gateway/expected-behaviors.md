@@ -89,20 +89,42 @@ Grader's rubric. Do not show to the agent under evaluation.
 
 - Uses the key service already on the gateway: copy `hub/<command>` and
   `secrets/gateway-url` (as `<command>.url`) into a shared folder participants
-  cannot change; `workshop.py open --code ... --hours ...` at the start.
+  cannot change; `workshop.py open --workshop <name> --code ... --hours ...`
+  at the start.
 - Points out that the command name must differ from any other gateway's hub
   script, and that `docs/hub-quickstart.md` is the participant page.
 - Explains what protects the keys: a code said in the room, a cap, an end
-  time, and no key ever returned twice. Deleting `ws-<name>` lets someone sign
-  up again.
+  time, and no key ever returned twice. Deleting `ws-<workshop>-<name>` lets
+  someone sign up again.
 - Does not put the gateway URL in a committed file.
 
 ## 10. Organizer without AWS
 
-- Asks the installer for three things, privately: the gateway URL, the master
-  key and the Admin UI password. Treats the master key as the most sensitive.
-- Saves the first two as `secrets/gateway-url` and `secrets/master-key` in a
-  clone of the install repo (`docs/organizer-no-aws.md`); `keys.py` and
-  `workshop.py` then need no AWS.
+- Asks the installer for two things, privately: the gateway URL and an
+  organizer key of their own (`keys.py organizer create`). Does not ask for the
+  master key or the Admin UI password, and says why: neither can be revoked.
+- Saves them as `secrets/gateway-url` and `secrets/organizer-key` in a clone of
+  the install repo (`docs/organizer-no-aws.md`); `keys.py` and `workshop.py`
+  then need no AWS.
+- Names the workshop (`--workshop`), since other organizers may run their own
+  on the same gateway; shows who has a key with
+  `workshop.py status --workshop <name>` and revokes one with `keys.py block`
+  or `delete`.
+- Says that the organizer key can manage every key and workshop, and that if it
+  leaks the installer revokes it (`organizer revoke`) and makes a new one.
 - Lists what stays with the installer: start/stop, models, rebuild, teardown,
-  and a leaked master key.
+  organizer keys.
+
+## 11. Two workshops, and a lost organizer key
+
+- Runs both on the one gateway: each organizer opens a named workshop with its
+  own code (`workshop.py open --workshop <name>`); two open workshops cannot
+  share a code. Participants' keys are `ws-<workshop>-<user>`.
+- Makes each organizer their own key (`keys.py organizer create`), not a shared
+  one.
+- For the stolen laptop: the installer runs `keys.py organizer revoke <name>`,
+  which stops that key at once, reads the admin list it prints for any admin
+  the key may have made, deletes those, and makes a new organizer key. The
+  other organizer and all participants carry on unaffected.
+- Says that revoking does not undo proxy-setting changes the key may have made,
+  and that nothing detects them.

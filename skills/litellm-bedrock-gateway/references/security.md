@@ -23,7 +23,13 @@
 - **Workshop sign-up gives nothing to someone who only knows a username.** The
   key service never returns a key that already exists, refuses wrong codes
   slowly, caps the number of keys, and closes by itself; its admin route needs
-  the master key (`workshop-signup.md`).
+  an admin key, checked with LiteLLM on every request (`workshop-signup.md`).
+- **Organizers without AWS get their own revocable admin key, never the master
+  key or the Admin UI password**, neither of which can be revoked or rotated
+  here. `keys.py organizer revoke` stops a key at once, but not what it already
+  did: an admin key can create more admins (the revoke lists them) and change
+  proxy settings (nothing detects that). Tested on LiteLLM 1.102.1
+  (`workshop-signup.md`).
 - **No committed file holds the gateway URL**, because install repos are
   often public. It lives in `secrets/gateway-url`.
 - **Admin UI with its own password**, so the master key is never typed into a
