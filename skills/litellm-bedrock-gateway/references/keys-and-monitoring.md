@@ -27,8 +27,16 @@ python scripts/keys.py create erin --budget 3 --days 5 --budget-duration 1d   # 
   bookkeeping: LiteLLM lets a key read another key's details when neither has a
   `user_id` (`security.md`).
 
-Send participants `build/participant-quickstart.md` (written by `deploy.sh`)
-with the gateway URL filled in.
+Send participants `docs/participant-quickstart.md` (written by `render.py`)
+and, in the same private message, the gateway URL from `secrets/gateway-url`.
+
+On a JupyterHub, participants can get their own keys instead:
+`workshop.py open` and the hub script (`workshop-signup.md`). Those keys are
+named `ws-<hub username>`; `keys.py` lists, blocks and deletes them like any
+other, and deleting one lets that person sign up again.
+
+An organizer without AWS access runs every command here from
+`secrets/gateway-url` and `secrets/master-key` (`workshop-signup.md`).
 
 ## Changing, pausing, removing
 

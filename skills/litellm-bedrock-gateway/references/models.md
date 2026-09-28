@@ -9,7 +9,8 @@
   exactly these models and nothing else);
 - LiteLLM's `model_list` (what the gateway serves, under what names, at what
   prices);
-- the model table and tool settings in `build/participant-quickstart.md`.
+- the model table and tool settings in `docs/participant-quickstart.md`, and
+  the model tiers in the hub script.
 
 LiteLLM does **not** discover Bedrock models: whatever is not in `model_list`
 does not exist for participants. The Admin UI's model dropdown shows LiteLLM's
@@ -77,5 +78,5 @@ Edit `models.yaml`, run `check_bedrock.py` if a model is new, then
 `scripts/deploy.sh`. It updates the IAM role in place, stores the new config in
 Parameter Store and reloads the running instance (a restart of about 30 seconds:
 warn participants). Keys that were limited to named models keep only those; a
-key with no model list gets every served model. Update `build/participant-quickstart.md`
+key with no model list gets every served model. Update `docs/participant-quickstart.md`
 for participants if names changed.

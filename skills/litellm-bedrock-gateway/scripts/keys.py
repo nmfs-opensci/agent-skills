@@ -13,10 +13,14 @@ Run from the deployment folder after `source gateway.env`:
 The organizer creates every key and sends it to its owner privately (a direct
 message, not a shared channel). A new key's value is written only to
 secrets/<name>.key (mode 600, git-ignored) and never printed. The admin
-(master) key is read from Parameter Store at run time and never printed.
+(master) key is never printed either.
 
-Talks to the stack's GatewayUrl, or to GATEWAY_URL if set (for example
-http://localhost:4000 with scripts/tunnel.sh running).
+Where the gateway is, first found of: --url, GATEWAY_URL (for example
+http://localhost:4000 with scripts/tunnel.sh running), secrets/gateway-url
+(written by deploy.sh), the stack's GatewayUrl output. The master key comes
+from secrets/master-key if that file exists, otherwise from Parameter Store.
+With both files in place no AWS access is needed: that is how an organizer
+without AWS runs the gateway (docs/organizer-no-aws.md).
 """
 
 import argparse
@@ -24,26 +28,44 @@ import os
 import pathlib
 import sys
 
-import boto3
 import requests
 
 SECRETS = pathlib.Path(__file__).resolve().parent.parent / "secrets"
+URL_FILE = SECRETS / "gateway-url"
+MASTER_FILE = SECRETS / "master-key"
+
+
+def aws_client(service):
+    """boto3 client, only for organizers with AWS access."""
+    if "AWS_ROLE_ARN" in os.environ:
+        sys.exit("A role from the environment would win over AWS_PROFILE: run `source gateway.env` first.")
+    import boto3
+    return boto3.client(service)
 
 
 def stack_output(stack, key):
-    outputs = boto3.client("cloudformation").describe_stacks(StackName=stack)["Stacks"][0]["Outputs"]
+    outputs = aws_client("cloudformation").describe_stacks(StackName=stack)["Stacks"][0]["Outputs"]
     return next(o["OutputValue"] for o in outputs if o["OutputKey"] == key)
 
 
+def gateway_url(stack, url=None):
+    url = url or os.environ.get("GATEWAY_URL")
+    if not url and URL_FILE.exists():
+        url = URL_FILE.read_text().strip()
+    return (url or stack_output(stack, "GatewayUrl")).rstrip("/")
+
+
 def master_key(stack):
-    return boto3.client("ssm").get_parameter(
+    if MASTER_FILE.exists():
+        return MASTER_FILE.read_text().strip()
+    return aws_client("ssm").get_parameter(
         Name=f"/{stack}/master-key", WithDecryption=True
     )["Parameter"]["Value"]
 
 
 class Gateway:
     def __init__(self, url, stack):
-        self.url = url.rstrip("/")
+        self.url = url
         self.headers = {"Authorization": f"Bearer {master_key(stack)}"}
 
     def call(self, method, path, **kw):
@@ -143,10 +165,10 @@ def delete(gw, args):
 
 def main():
     stack = os.environ.get("GATEWAY_STACK")
-    if not stack or "AWS_ROLE_ARN" in os.environ:
+    if not stack:
         sys.exit("Run `source gateway.env` in the deployment folder first.")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--url", default=os.environ.get("GATEWAY_URL"), help="default: the stack's GatewayUrl")
+    ap.add_argument("--url", help="default: GATEWAY_URL, secrets/gateway-url, or the stack's GatewayUrl")
     sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("create", help="one key per name")
     c.add_argument("names", nargs="+")
@@ -165,7 +187,7 @@ def main():
         sub.add_parser(name).add_argument("name")
     args = ap.parse_args()
 
-    gw = Gateway(args.url or stack_output(stack, "GatewayUrl"), stack)
+    gw = Gateway(gateway_url(stack, args.url), stack)
     {
         "create": create,
         "update": update,

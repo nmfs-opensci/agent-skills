@@ -13,6 +13,7 @@ Checks, over HTTPS:
   - the test key can read its own balance and has a user_id; with --other, it
     cannot read that other key's details
   - the Admin UI is reachable or blocked, as GATEWAY_ADMIN_UI says
+  - the workshop key service answers, and refuses sign-up while closed
   - every served model answers a tool-use request, in both the OpenAI format
     (OpenCode, Copilot CLI) and the Anthropic format (Claude Code)
   - with --spend: after LiteLLM's ~1 minute write delay, each model's calls
@@ -28,8 +29,9 @@ import pathlib
 import sys
 import time
 
-import boto3
 import requests
+
+from keys import gateway_url, master_key
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TOOL_PROMPT = "What is the weather in Paris? Use the get_weather tool."
@@ -40,11 +42,6 @@ results = []
 def check(label, ok, detail=""):
     results.append(ok)
     print(f"  {'ok  ' if ok else 'FAIL'} {label}{'  ' + detail if detail else ''}")
-
-
-def stack_output(stack, key):
-    outputs = boto3.client("cloudformation").describe_stacks(StackName=stack)["Stacks"][0]["Outputs"]
-    return next(o["OutputValue"] for o in outputs if o["OutputKey"] == key)
 
 
 def openai_tool_call(url, headers, model):
@@ -78,12 +75,12 @@ def main():
     stack = os.environ.get("GATEWAY_STACK") or sys.exit("Run `source gateway.env` first.")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("key_name", help="name of a key in secrets/")
-    ap.add_argument("--url", default=os.environ.get("GATEWAY_URL"))
+    ap.add_argument("--url", help="default: as keys.py finds it")
     ap.add_argument("--models", nargs="+", help="default: every model the gateway serves")
     ap.add_argument("--other", help="a second key in secrets/ that the first must not be able to read")
     ap.add_argument("--spend", action="store_true", help="wait and check spend is recorded per model")
     args = ap.parse_args()
-    url = (args.url or stack_output(stack, "GatewayUrl")).rstrip("/")
+    url = gateway_url(stack, args.url)
     key = (ROOT / "secrets" / f"{args.key_name}.key").read_text().strip()
     headers = {"Authorization": f"Bearer {key}"}
     print(f"Gateway {url}")
@@ -110,6 +107,10 @@ def main():
     want = r.status_code == 403 if ui == "tunnel" else r.status_code < 400
     check(f"Admin UI is {'blocked' if ui == 'tunnel' else 'reachable'} (GATEWAY_ADMIN_UI={ui})",
           want, f"HTTP {r.status_code}")
+    r = requests.get(f"{url}/workshop/health", timeout=30)
+    check("workshop key service answers", r.ok, f"HTTP {r.status_code}")
+    r = requests.get(f"{url}/workshop/admin", timeout=30)
+    check("workshop admin refuses without the master key", r.status_code == 404, f"HTTP {r.status_code}")
 
     served = [m["id"] for m in requests.get(f"{url}/v1/models", headers=headers, timeout=30).json()["data"]]
     for model in args.models or served:
@@ -120,8 +121,7 @@ def main():
     if args.spend and token:
         print("  waiting 75 s for LiteLLM to write spend ...")
         time.sleep(75)
-        master = boto3.client("ssm").get_parameter(
-            Name=f"/{stack}/master-key", WithDecryption=True)["Parameter"]["Value"]
+        master = master_key(stack)
         rows = requests.get(f"{url}/spend/logs", params={"api_key": token}, timeout=60,
                             headers={"Authorization": f"Bearer {master}"}).json()
         by_model = {}

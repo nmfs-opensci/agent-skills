@@ -14,7 +14,7 @@ read -r -p "Delete stack '$GATEWAY_STACK' and /$GATEWAY_STACK/* in $AWS_REGION? 
 aws cloudformation delete-stack --stack-name "$GATEWAY_STACK"
 aws cloudformation wait stack-delete-complete --stack-name "$GATEWAY_STACK"
 echo "Stack deleted."
-for name in master-key db-password salt-key ui-password litellm-config caddyfile; do
+for name in master-key db-password salt-key ui-password litellm-config caddyfile keyservice; do
   aws ssm delete-parameter --name "/$GATEWAY_STACK/$name" 2>/dev/null \
     && echo "Deleted /$GATEWAY_STACK/$name" || true
 done

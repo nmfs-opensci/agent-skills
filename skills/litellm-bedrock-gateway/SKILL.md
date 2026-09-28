@@ -1,6 +1,6 @@
 ---
 name: litellm-bedrock-gateway
-description: Set up, verify, run, and tear down a LiteLLM gateway on AWS that lets workshop or clinic participants use coding agents (Claude Code, OpenCode, GitHub Copilot CLI) with Amazon Bedrock models through personal virtual keys with their own budgets and expiry dates, without handing out AWS credentials. Use when asked to give a group access to Claude or other Bedrock models from coding tools, to deploy or update LiteLLM in front of Bedrock, to get an AWS account ready for Bedrock (Anthropic use-case form, Marketplace subscription, quotas, payment method), to diagnose why Bedrock refuses a model, to create, limit, block, or monitor participants' keys, to estimate what a coding-agent workshop will cost, or to stop or remove the gateway afterwards.
+description: Set up, verify, run, and tear down a LiteLLM gateway on AWS that lets workshop or clinic participants use coding agents (Claude Code, OpenCode, GitHub Copilot CLI) with Amazon Bedrock models through personal virtual keys with their own budgets and expiry dates, without handing out AWS credentials. Includes workshop sign-up from a JupyterHub with a code said in the room, and running the event as an organizer with no AWS access. Use when asked to give a group access to Claude or other Bedrock models from coding tools, to deploy or update LiteLLM in front of Bedrock, to get an AWS account ready for Bedrock (Anthropic use-case form, Marketplace subscription, quotas, payment method), to diagnose why Bedrock refuses a model, to create, limit, block, or monitor participants' keys, to open or close workshop sign-up on a JupyterHub, to estimate what a coding-agent workshop will cost, or to stop or remove the gateway afterwards.
 ---
 
 # LiteLLM gateway to Amazon Bedrock
@@ -32,17 +32,22 @@ repository:
   and the participants' model table. Never maintain a second list.
 - `assets/gateway-template.yaml` — the CloudFormation source (rendered, never
   deployed directly).
-- `assets/participant-quickstart.md` — participant instructions, filled in by
-  `render.py`.
+- `assets/keyservice.py` — the workshop key service run beside LiteLLM.
+- `assets/*.md` and `assets/hub-signup.sh` — templates `render.py` fills in as
+  each install's `docs/` (participant quickstart, hub quickstart, organizer
+  guide, organizer without AWS) and `hub/<command>` (the JupyterHub sign-up
+  script).
 - `scripts/` — `init_deployment.sh`, `inspect_account.py`, `check_bedrock.py`,
-  `deploy.sh`, `keys.py`, `check_gateway.py`, `instance.sh`, `tunnel.sh`,
-  `teardown.sh`.
+  `deploy.sh`, `keys.py`, `workshop.py`, `check_gateway.py`, `instance.sh`,
+  `tunnel.sh`, `teardown.sh`.
 
 Start every install with `scripts/init_deployment.sh <folder>`, which copies
 these into a **deployment folder** holding that gateway's `gateway.env` and
 `models.yaml`. All commands then run from that folder after
 `source gateway.env`. The copy is deliberate: a running gateway must not change
-because the skill changed.
+because the skill changed. The folder is usually the install's own (often
+public) repository: `docs/` and `hub/` are committed, while `secrets/` and
+`build/` are git-ignored.
 
 ## The order of work
 
@@ -52,7 +57,9 @@ resources.
 1. **Ask the installer**: which AWS account, and what kind (classic,
    organization member, or "new experience"); Region; domain name or
    `sslip.io`; whether the Admin UI is public or only through the tunnel;
-   which models; how many people, for how long, and the budget per person.
+   which models; how many people, for how long, and the budget per person;
+   whether people sign up from a JupyterHub (the hub script's name and shared
+   folder); and who organizes, and whether they have AWS access.
 2. **Sign in without long-lived keys** — `references/aws-access.md`. Clear any
    credentials the environment injects (JupyterHub roles, Bedrock API keys)
    before anything else, or every later command silently uses the wrong
@@ -73,7 +80,9 @@ resources.
    HTTPS, then a real coding tool with a test key, then spend recorded on the
    key. Report what ran, not what should work.
 8. **Hand out keys and watch spend** — `references/keys-and-monitoring.md` and
-   `references/clients.md`. Organizers create every key and send it privately.
+   `references/clients.md`. Organizers create every key and send it privately,
+   or open JupyterHub sign-up (`references/workshop-signup.md`), which also
+   covers an organizer without AWS access.
 9. **Operate and finish** — `references/operate.md`: scaling, stopping between
    sessions, teardown.
 
@@ -92,7 +101,10 @@ Security choices and the reasons behind them: `references/security.md`.
   `scripts/instance.sh health`, not by reading container logs, which can
   contain the database URL.
 - **Organizers create every key and send it privately** (a direct message,
-  never a shared channel or list). Keys are per person: never share one.
+  never a shared channel or list), or participants get their own through
+  workshop sign-up. Keys are per person: never share one.
+- **No committed file holds the gateway URL.** Install repos are often public;
+  the URL lives in `secrets/gateway-url` and goes out privately.
 - **One list of models.** Change `models.yaml`, then `scripts/deploy.sh`. It
   updates the IAM role and reloads the running instance; never edit the config
   on the instance by hand.

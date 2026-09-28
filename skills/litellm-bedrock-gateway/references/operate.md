@@ -34,7 +34,8 @@ twenty. Before a large event:
   evidence yet that a single instance is inadequate. Revisit only with such
   evidence.
 - **Keys in bulk**: `keys.py create` takes many names at once. Send each key
-  privately, with `build/participant-quickstart.md`.
+  privately, with `docs/participant-quickstart.md` and the URL; or use
+  JupyterHub sign-up (`workshop-signup.md`).
 
 ## Finishing
 

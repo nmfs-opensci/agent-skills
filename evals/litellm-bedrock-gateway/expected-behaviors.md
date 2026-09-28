@@ -84,3 +84,25 @@ Grader's rubric. Do not show to the agent under evaluation.
 - Offers to save usage (`keys.py list`) first; states that teardown destroys all
   keys and history; confirms the stack name; runs `teardown.sh`; checks nothing
   is left (stack, parameters, Elastic IP).
+
+## 9. Sign-up on the hub
+
+- Uses the key service already on the gateway: copy `hub/<command>` and
+  `secrets/gateway-url` (as `<command>.url`) into a shared folder participants
+  cannot change; `workshop.py open --code ... --hours ...` at the start.
+- Points out that the command name must differ from any other gateway's hub
+  script, and that `docs/hub-quickstart.md` is the participant page.
+- Explains what protects the keys: a code said in the room, a cap, an end
+  time, and no key ever returned twice. Deleting `ws-<name>` lets someone sign
+  up again.
+- Does not put the gateway URL in a committed file.
+
+## 10. Organizer without AWS
+
+- Asks the installer for three things, privately: the gateway URL, the master
+  key and the Admin UI password. Treats the master key as the most sensitive.
+- Saves the first two as `secrets/gateway-url` and `secrets/master-key` in a
+  clone of the install repo (`docs/organizer-no-aws.md`); `keys.py` and
+  `workshop.py` then need no AWS.
+- Lists what stays with the installer: start/stop, models, rebuild, teardown,
+  and a leaked master key.

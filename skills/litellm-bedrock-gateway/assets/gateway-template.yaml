@@ -4,8 +4,10 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   LiteLLM gateway to Amazon Bedrock: one EC2 instance running LiteLLM, Postgres
   and Caddy in Docker. Participants call it over HTTPS with LiteLLM virtual
-  keys; the only AWS credential is the instance role. Secrets and the LiteLLM
-  and Caddy configs live in SSM Parameter Store under /<stack name>/.
+  keys; the only AWS credential is the instance role. A small key service
+  beside LiteLLM handles workshop sign-up. Secrets, the LiteLLM and Caddy
+  configs and the key service code live in SSM Parameter Store under
+  /<stack name>/.
 
 Parameters:
   LiteLLMImage:
@@ -16,6 +18,11 @@ Parameters:
     Type: String
     # 2.11.4, pinned by digest (multi-arch; includes arm64).
     Default: public.ecr.aws/docker/library/caddy:2.11.4-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b
+  PythonImage:
+    Type: String
+    # 3.13-alpine, pinned by digest (multi-arch; includes arm64). Runs the
+    # workshop key service, which uses the standard library only.
+    Default: public.ecr.aws/docker/library/python:3.13-alpine@sha256:79e7a9b9ff1cbceff819f856fb374477792a5967759d94df266de7b7b4120e6f
   PostgresImage:
     Type: String
     # 16-alpine, pinned by digest (multi-arch; includes arm64).
@@ -217,11 +224,14 @@ Resources:
               "$MASTER" "$SALT" "$DBPW" > litellm.env
             # Admin UI login: its own password, so the master key is never typed in a browser.
             printf 'UI_USERNAME=admin\nUI_PASSWORD=%s\nPROXY_BASE_URL=https://${Hostname}\n' "$UIPW" >> litellm.env
+            # The workshop key service creates keys with the master key.
+            printf 'LITELLM_MASTER_KEY=%s\n' "$MASTER" > keyservice.env
             unset MASTER DBPW SALT UIPW
             umask 022
 
-            # Fetches config.yaml and Caddyfile, writing them in place (they are
-            # bind-mounted files), then restarts whatever is already running.
+            # Fetches config.yaml, Caddyfile and the key service, writing them in
+            # place (they are bind-mounted files), then restarts whatever is
+            # already running.
             cat > refresh.sh <<'REFRESH'
             #!/bin/bash
             set -euo pipefail
@@ -232,9 +242,12 @@ Resources:
             }
             get litellm-config > config.yaml.new
             get caddyfile > Caddyfile.new
+            get keyservice > keyservice.py.new
             cat config.yaml.new > config.yaml && rm config.yaml.new
             cat Caddyfile.new > Caddyfile && rm Caddyfile.new
-            for c in litellm caddy; do
+            mkdir -p keyservice/state
+            cat keyservice.py.new > keyservice/keyservice.py && rm keyservice.py.new
+            for c in litellm caddy keyservice; do
               if docker ps -q -f name="^$c$" | grep -q .; then docker restart "$c" >/dev/null; fi
             done
             echo "refresh: done"
@@ -251,6 +264,14 @@ Resources:
               --env-file litellm.env -v /opt/litellm/config.yaml:/app/config.yaml:ro \
               -p 127.0.0.1:4000:4000 \
               ${LiteLLMImage} --config /app/config.yaml --port 4000
+
+            # Workshop sign-up (/workshop/* through Caddy). Closed until the
+            # organizer opens it; its settings survive restarts in state/.
+            docker run -d --name keyservice --restart unless-stopped --network litellm \
+              --env-file keyservice.env \
+              -v /opt/litellm/keyservice/keyservice.py:/app/keyservice.py:ro \
+              -v /opt/litellm/keyservice/state:/state \
+              ${PythonImage} python /app/keyservice.py
 
             # HTTPS in front of LiteLLM. Caddy gets and renews the certificate
             # itself; the Elastic IP may attach a few seconds after boot, and

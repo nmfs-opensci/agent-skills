@@ -16,7 +16,8 @@ python scripts/check_gateway.py gateway-check --other gateway-check-2 --spend
 It checks, over HTTPS: no key → 401; the key reads its own balance and has a
 `user_id`; it cannot read the other key's details (403 on `/key/info?key=`,
 empty on `/v2/key/info`); the Admin UI is reachable or blocked as
-`GATEWAY_ADMIN_UI` says; every served model answers a tool-use request in both
+`GATEWAY_ADMIN_UI` says; the workshop key service answers and its admin
+route refuses without the master key; every served model answers a tool-use request in both
 the OpenAI format (OpenCode, Copilot CLI) and the Anthropic format (Claude
 Code); and, after LiteLLM's ~1 minute write delay, each model's calls were
 recorded at more than $0. Cost: a few cents.
@@ -26,7 +27,7 @@ does nothing: set its price in `models.yaml` (`models.md`).
 
 ## 2. A real coding tool
 
-Use the commands in `build/participant-quickstart.md` exactly as written, in a
+Use the commands in `docs/participant-quickstart.md` exactly as written, in a
 fresh shell with no other AI settings (an empty `HOME` is the honest test). A
 file-reading task shows that tool calls work end to end:
 
@@ -76,3 +77,19 @@ manual step; `tunnel` mode blocked `/ui` and the login routes over HTTPS while
 the UI worked through the tunnel; key isolation (below) held; a $0.0001 budget
 returned 429; stop/start kept the URL, keys and spend; teardown left nothing
 behind.
+
+## What was verified for workshop sign-up (2026-09-28)
+
+In a throwaway stack in us-east-2, deployed from scratch with the scripts as
+shipped: `check_gateway.py --other --spend` passed all 41 checks, including
+that the key service answers and refuses its admin route without the master
+key. With AWS credentials disabled and only `secrets/gateway-url` and
+`secrets/master-key`, `workshop.py` opened sign-up and `keys.py` listed keys.
+The rendered hub script, run from a shared folder in an empty home with
+`CLAUDE_CODE_USE_BEDROCK` and a bogus `ANTHROPIC_API_KEY` set, signed up
+(`ws-<user>`, with a `user_id`) and the real Claude Code read a file through
+the gateway; its spend showed on that key and in `--budget`. A repeat sign-up
+got 409. A second `deploy.sh` refreshed the instance: the key service restarted
+with the stored code and kept its sign-up state. Teardown left nothing behind.
+Tested locally against a stub: wrong code, the key cap, and a missing `.url`
+file. Not tested: an interactive first start on a real hub account.

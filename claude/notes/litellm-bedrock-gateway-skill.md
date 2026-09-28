@@ -58,3 +58,28 @@ pattern matches its own command line); use `pkill -x session-manager`.
   cleanup items from the review, and a correction on the key-isolation fix. The
   **live gateway's keys have no `user_id`**, so they can read each other's details
   if someone has a hash. That's low risk, since participants can't list hashes.
+
+## Workshop sign-up and organizer without AWS (issue #25, 2026-09-28)
+
+Task A of three from the clinics repo (`agent-coders-clinics`
+`claude/notes/gateway-skill-tasks.md`): B is a sparse template repo
+`nmfs-opensci/litellm-bedrock-gateway`, C the colleague's org-install
+instructions. Eli's decisions:
+
+- **The key service is always deployed**, closed until `workshop.py open`. No
+  on/off setting.
+- **Install repos are usually public, so no committed file holds the gateway
+  URL.** Docs go in `docs/` and the hub script in `hub/`, both committed;
+  the URL is in `secrets/gateway-url`. The hub script reads it from
+  `<command>.url` copied beside it on the hub. (Eli's idea: "all in docs/ but
+  the URL in secrets/".)
+- **`CLAUDE_CODE_AUTO_MODE_SERVER=0`** goes in the hub script and in the
+  participant quickstart. Provisional: Claude Code calls the variable
+  temporary.
+- The master key file is `secrets/master-key`, not `master.key`: participant
+  keys are `secrets/<name>.key`, so a key named "master" would collide.
+- Rotating the master key is not worked out (env files are written at first
+  boot only); the skill says so rather than guessing.
+
+Verified in `gwskill-test-delete-me` (Greenfield) and torn down; details in the
+skill's `references/verify.md`.

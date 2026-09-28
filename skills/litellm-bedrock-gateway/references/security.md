@@ -20,6 +20,12 @@
   `/v2/key/info` and broke the Admin UI, which uses `/key/info?key=` itself.
   Hashes are not normally discoverable by participants (`/key/list` and
   `/spend/logs` refuse them), so this was a defence-in-depth fix.
+- **Workshop sign-up gives nothing to someone who only knows a username.** The
+  key service never returns a key that already exists, refuses wrong codes
+  slowly, caps the number of keys, and closes by itself; its admin route needs
+  the master key (`workshop-signup.md`).
+- **No committed file holds the gateway URL**, because install repos are
+  often public. It lives in `secrets/gateway-url`.
 - **Admin UI with its own password**, so the master key is never typed into a
   browser; published or tunnel-only by the installer's choice (`deploy.md`).
 - **Minimal network.** Inbound 443 and 80 only (80 serves the certificate

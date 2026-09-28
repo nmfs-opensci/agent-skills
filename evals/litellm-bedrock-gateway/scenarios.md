@@ -48,3 +48,15 @@ account.)
 ## 8. After the event
 
 > The workshop is over. Shut it all down.
+
+## 9. Sign-up on the hub
+
+> Our workshop is on a JupyterHub tomorrow. I don't want to send twenty people
+> `sk-` keys to paste. Can they just get one themselves?
+
+(Planning only; the gateway is already deployed with this skill.)
+
+## 10. Organizer without AWS
+
+> The gateway is in our IT group's AWS account and I'm not allowed in it. I'm
+> running the workshop. What do I need from them, and how do I manage keys?

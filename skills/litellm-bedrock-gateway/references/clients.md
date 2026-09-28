@@ -2,10 +2,13 @@
 
 The gateway answers the Anthropic Messages API (`/v1/messages`), the OpenAI Chat
 Completions API (`/v1/chat/completions`) and the OpenAI Responses API
-(`/v1/responses`). `build/participant-quickstart.md`, generated from
+(`/v1/responses`). `docs/participant-quickstart.md`, generated from
 `assets/participant-quickstart.md` and `models.yaml`, holds the tested setup for
 three tools. Keep one quickstart for all tools, with a shared first step that
-sets `GATEWAY_KEY` and `GATEWAY_URL`, so every later block pastes unedited.
+sets `GATEWAY_KEY` and `GATEWAY_URL`, so every later block pastes unedited. The
+URL is pasted in by the participant, so the quickstart can be committed to a
+public repository. On a JupyterHub, the hub script does all of this
+(`workshop-signup.md`).
 
 ## Claude Code (tested)
 
@@ -17,6 +20,8 @@ sets `GATEWAY_KEY` and `GATEWAY_URL`, so every later block pastes unedited.
   `ANTHROPIC_API_KEY`: any of them sends Claude Code around the gateway, and the
   symptom is a key with no spend.
 - No Claude login is needed.
+- `CLAUDE_CODE_AUTO_MODE_SERVER=0`, or Claude Code pauses on a notice that the
+  session is not eligible for auto mode (Provisional: `workshop-signup.md`).
 
 ## OpenCode (tested)
 

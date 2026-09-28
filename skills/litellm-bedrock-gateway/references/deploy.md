@@ -9,13 +9,14 @@ One CloudFormation stack, so one command removes everything:
 | VPC, public subnet, internet gateway, route | its own network; no NAT gateway (the instance has a public address) |
 | security group | inbound 443 and 80 (Let's Encrypt challenge and redirect); outbound 443 only |
 | IAM role + instance profile | Bedrock invoke on exactly the served models; read its own `/<stack>/*` parameters; SSM management |
-| EC2 `t4g.small` (arm64), Amazon Linux 2023, 20 GB encrypted gp3 | LiteLLM, Postgres and Caddy in Docker; IMDSv2 required, hop limit 2 so containers get the role's credentials |
+| EC2 `t4g.small` (arm64), Amazon Linux 2023, 20 GB encrypted gp3 | LiteLLM, Postgres, Caddy and the workshop key service in Docker; IMDSv2 required, hop limit 2 so containers get the role's credentials |
 | Elastic IP | a fixed address, so the HTTPS name survives stop/start |
 
 Outside the stack, in Parameter Store under `/<stack>/`: SecureString
 `master-key`, `db-password`, `salt-key`, `ui-password` (from
 `make_secrets.py`, never overwritten, never printed) and String
-`litellm-config`, `caddyfile` (from `render.py`, rewritten by every deploy).
+`litellm-config`, `caddyfile` (from `render.py`) and `keyservice` (the key
+service code), rewritten by every deploy.
 
 Images are pinned by digest (`version-matrix.md`). HTTPS is Caddy with a Let's
 Encrypt certificate for `<elastic ip>.sslip.io`, which needs no domain, or for
@@ -30,14 +31,15 @@ metered per request (`costs.md`).
 1. `scripts/init_deployment.sh <folder>` (from the skill), then in that folder:
    make `.venv` with `scripts/requirements.txt`, edit `gateway.env` (profile,
    Region, `GATEWAY_STACK`, `GATEWAY_DOMAIN`, `GATEWAY_ADMIN_UI`) and
-   `models.yaml`. Put the folder under version control if the installer wants
-   it: `.gitignore` already excludes `secrets/`, `build/` and `.venv/`.
+   `models.yaml`, and the hub and workshop settings (`workshop-signup.md`).
+   Put the folder under version control, usually as the install's own
+   repository: `.gitignore` already excludes `secrets/`, `build/` and `.venv/`.
 2. `source gateway.env`, confirm the identity, run `inspect_account.py` and
    `check_bedrock.py` (steps 3–4 of the skill).
 3. **Show the installer what will be created and what it costs, and get a yes.**
 4. `scripts/deploy.sh`. It renders, creates missing secrets, stores the configs,
-   deploys the stack (about 3 minutes) and writes
-   `build/participant-quickstart.md` with the gateway URL.
+   deploys the stack (about 3 minutes), writes the install's `docs/` and
+   `hub/` (none holds the URL) and saves the URL in `secrets/gateway-url`.
 5. First boot installs Docker and starts the containers: allow 2–3 minutes, then
    `scripts/instance.sh health` should print
    `{"status":"healthy","db":"connected"}`.

@@ -7,6 +7,7 @@ Everything here goes stale. Check it before relying on it, and update this file
 |---|---|---|
 | LiteLLM image | `ghcr.io/berriai/litellm-database:v1.102.1`, pinned by digest in the template | 2026-09-25 (latest release) |
 | Caddy image | `caddy:2.11.4-alpine` (public ECR), pinned by digest | 2026-09-25 |
+| Python image (key service) | `python:3.13-alpine` (public ECR), pinned by digest | 2026-09-28 |
 | Postgres image | `postgres:16-alpine` (public ECR), pinned by digest | 2026-09-25 |
 | AMI | Amazon Linux 2023 arm64, latest via SSM public parameter | resolved at deploy |
 | AWS CLI | v2 ≥ 2.32 for `aws login` (tested 2.37.1) | 2026-09-25 |
