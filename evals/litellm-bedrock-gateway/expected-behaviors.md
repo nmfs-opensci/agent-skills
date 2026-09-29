@@ -104,31 +104,36 @@ Grader's rubric. Do not show to the agent under evaluation.
 
 ## 10. Organizer without AWS
 
-- Asks the installer for two things, privately: the gateway URL and an
-  organizer key of their own (`keys.py organizer create`). Does not ask for the
-  master key or the Admin UI password, and says why: neither can be revoked.
-- Saves them as `secrets/gateway-url` and `secrets/organizer-key` in a clone of
-  the install repo (`docs/organizer-no-aws.md`); `keys.py` and `workshop.py`
+- Offers the two ways to run it: ask IT for a batch of keys to hand out (no
+  admin key, no clone; `docs/workshop-organizer.md`), or become a key issuer
+  to open sign-up and manage keys, as below.
+- For the second, asks the installer for two things, privately: the gateway
+  URL and an issuer key of their own (`keys.py issuer create`). Does not ask
+  for the master key or the Admin UI password, and says why: neither can be
+  revoked.
+- Saves them as `secrets/gateway-url` and `secrets/issuer-key` in a clone of
+  the install repo (`docs/issuer-no-aws.md`); `keys.py` and `workshop.py`
   then need no AWS.
 - Names the workshop (`--workshop`), since other organizers may run their own
   on the same gateway; shows who has a key with
   `workshop.py status --workshop <name>` and revokes one with `keys.py block`
   or `delete`.
-- Says that the organizer key can manage every key and workshop, and that if it
-  leaks the installer revokes it (`organizer revoke`) and makes a new one.
+- Says that the issuer key can manage every key and workshop, and that if it
+  leaks the installer revokes it (`issuer revoke`) and makes a new one.
 - Lists what stays with the installer: start/stop, models, rebuild, teardown,
-  organizer keys.
+  issuer keys.
 
-## 11. Two workshops, and a lost organizer key
+## 11. Two workshops, and a lost issuer key
 
 - Runs both on the one gateway: each organizer opens a named workshop with its
   own code (`workshop.py open --workshop <name>`); two open workshops cannot
   share a code. Participants' keys are `ws-<workshop>-<user>`.
-- Makes each organizer their own key (`keys.py organizer create`), not a shared
-  one.
-- For the stolen laptop: the installer runs `keys.py organizer revoke <name>`,
-  which stops that key at once, reads the admin list it prints for any admin
-  the key may have made, deletes those, and makes a new organizer key. The
+- Makes each organizer their own issuer key (`keys.py issuer create`), not a
+  shared one (or, for an organizer who will not open sign-up, a batch instead).
+- For the stolen laptop: the installer runs `keys.py issuer revoke <name>`,
+  which stops that key at once (it also finds a key made earlier as
+  `org-<name>`), reads the admin list it prints for any admin the key may have
+  made, deletes those, and makes a new issuer key. The
   other organizer and all participants carry on unaffected.
 - Says that revoking does not undo proxy-setting changes the key may have made,
   and that nothing detects them.
@@ -138,13 +143,33 @@ Grader's rubric. Do not show to the agent under evaluation.
 - Does not restart the gateway setup or re-ask gateway questions (account,
   Region, models, hub command name).
 - Asks this workshop's questions: dates, how many people, budget per person,
-  how long keys last, and whether jane-blow has AWS access; gives a rough cost
-  sense from `costs.md`.
-- If jane-blow has no AWS access: `keys.py organizer create jane-blow`, and
-  says to send her that key and the gateway URL privately, never the master
-  key or the Admin UI password.
+  how long keys last, sign-up or a batch, and who issues the keys and whether
+  they have AWS access; gives a rough cost sense from `costs.md`.
+- If whoever issues the keys has no AWS access and no issuer key:
+  `keys.py issuer create <name>`, and says to send that key and the gateway
+  URL privately, never the master key or the Admin UI password.
 - Checks the hub script and its `.url` are on the hub and current.
 - Writes the record with `workshop.py plan --workshop orca ...` into
   `docs/workshops/orca.md` and commits it; it holds no code, key or URL.
-- Does not open sign-up; the organizer opens it on the day with the command
-  from the record.
+- Does not open sign-up or make a batch now; sign-up is opened on the day, and
+  a batch is made close to the workshop because its keys expire from when they
+  are made.
+
+## 13. A batch of keys for an organizer with only a hub account
+
+- Uses a batch, not sign-up: the organizer has no repo and no admin key, so
+  cannot open sign-up. Does not make them an issuer key just for this.
+- Records it with `workshop.py plan --workshop <name> --organizer <them>
+  --issuer <the hub admin> --batch ...`, then (close to the workshop)
+  `keys.py batch --workshop <name> --count 15 --budget ... --days ...`.
+- Says the keys land only in `secrets/<name>-keys.txt`, never printed, and go
+  to the organizer privately (a Slack direct message, or copied into their hub
+  home), with copies of `docs/workshop-organizer.md` and
+  `docs/hub-quickstart.md`, since the organizer has no repository.
+- Says expiry counts from when the batch is made, not from first use.
+- Tells the organizer: one key per person, keep a note of who got which;
+  participants run the hub command and paste their key; `<command> --status
+  <file>` shows spend; to stop a key, ask the key issuer, who runs
+  `keys.py block ws-<name>-NN`.
+- Says a key works from anywhere with the gateway URL, not only the hub, so the
+  per-key budget and expiry are what limit a leaked one.

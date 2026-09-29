@@ -116,3 +116,25 @@ working, and listed an admin the other had made directly, flagged.
 `check_gateway.py --other --spend` passed 42 of 42. `instance.sh refresh`
 decoded the gzipped key service and kept both workshops' state. Teardown
 left nothing behind (stack, parameters, Elastic IP).
+
+## What was verified for key batches and issuer keys (2026-09-29)
+
+In a throwaway stack in us-east-2, deployed from scratch with the scripts as
+shipped (issue #33). `keys.py issuer create` (and its alias `organizer
+create`) made `iss-` admins; `issuer list` showed a hand-made `org-` admin as
+made by the script, and `issuer revoke` removed it by its short name. In an
+issuer's folder with every AWS credential source disabled, only
+`secrets/gateway-url` and `secrets/issuer-key`: `keys.py batch` made three
+keys, then two more numbered on (`ws-whale-04`, `-05`), all in one mode-600
+file and none on the terminal; a bad name was refused; `workshop.py status`
+listed the batch-only workshop; `plan --batch` wrote its record; the old name
+`secrets/organizer-key` still worked. The rendered hub script, from a shared
+folder in empty homes with `CLAUDE_CODE_USE_BEDROCK` and a bogus
+`ANTHROPIC_API_KEY` set: a wrong pasted key was refused and not saved; a batch
+key pasted with spaces around it was trimmed, saved mode 600, and the real
+Claude Code answered through the gateway ($0.04 recorded on the key). After
+the issuer blocked one key and deleted another, the organizer's `--status`
+showed both as not accepted and the rest with spend. Sign-up with a code still
+worked on the same workshop, and batch keys, the blocked one included, counted
+against its cap. No key value appeared in any output. Not tested: an
+interactive first start on a real hub account, a batch file sent over Slack.

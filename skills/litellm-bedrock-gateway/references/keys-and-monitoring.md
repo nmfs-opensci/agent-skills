@@ -2,7 +2,8 @@
 
 ## Keys
 
-Organizers create every key and send it to its owner **privately**: a direct
+Key issuers (the installer, or someone with an issuer key) create every key
+and send it to its owner **privately**: a direct
 message, never a shared channel, email list or document. Keys are per person;
 use is recorded against each one, so a shared key hides who spent what and lets
 one person exhaust another's budget.
@@ -19,7 +20,7 @@ python scripts/keys.py create erin --budget 3 --days 5 --budget-duration 1d   # 
   served model, including any added later.
 - `--budget-duration` resets the budget on a schedule (a daily allowance).
 - Each key's value is written only to `secrets/<name>.key` (mode 600,
-  git-ignored) and never printed. The organizer copies it from there into the
+  git-ignored) and never printed. The issuer copies it from there into the
   private message. If the file is opened in JupyterLab, JupyterLab keeps a copy
   under `secrets/.ipynb_checkpoints/`; `keys.py delete` and `teardown.sh` remove
   those too.
@@ -36,9 +37,21 @@ named `ws-<workshop>-<hub username>`; `workshop.py status --workshop <name>`
 lists one workshop's, and `keys.py` lists, blocks and deletes them like any
 other. Deleting one lets that person sign up again.
 
-An organizer without AWS access runs every command here from
-`secrets/gateway-url` and their own organizer key in `secrets/organizer-key`,
-made by the installer with `keys.py organizer create` (`workshop-signup.md`).
+For a workshop organizer who is not a key issuer, make a batch and send them
+the file (`workshop-signup.md`, "Key batches"):
+
+```bash
+python scripts/keys.py batch --workshop whale --count 15 --budget 20 --days 7
+```
+
+Keys `ws-whale-01` .. `-15` go only into `secrets/whale-keys.txt`. Their
+expiry counts from now, so make the batch close to the workshop. The organizer
+checks spend on the hub with `<hub command> --status <file>`; blocking stays
+with the issuer.
+
+A key issuer without AWS access runs every command here from
+`secrets/gateway-url` and their own issuer key in `secrets/issuer-key`, made
+by the installer with `keys.py issuer create` (`workshop-signup.md`).
 
 ## Changing, pausing, removing
 

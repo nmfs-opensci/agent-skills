@@ -183,3 +183,30 @@ clinics repo calls it `nmfs-opensci/litellm-bedrock-gateway`; the real name is
 installer copies: `gateway.env`, `models.yaml`, `.gitignore`, and committed
 `docs/` and `hub/` after rendering, with scripts from the skill's
 `init_deployment.sh`, and no URL or secret in any committed file.
+
+## Key batches and three roles (issue #33, 2026-09-29)
+
+Eli's decisions, from a hub-admin point of view (Eli is a hub admin without
+AWS access to the org account that hosts the real gateway):
+
+- **Three roles**: installer (AWS), key issuer (install-repo clone + revocable
+  issuer key, often no AWS; e.g. Eli), organizer (hub account only: no repo,
+  no admin key). "Organizer key" was renamed "issuer key"; the old
+  `organizer` subcommand, `org-` prefix and `secrets/organizer-key` keep
+  working because the template repo and the clinics install already use them.
+- **Sign-up stays.** Eli first proposed dropping it for pre-issued keys, then
+  kept it: it suits the common case where the issuer runs the workshop. Batches
+  are additive; the hub script takes a code or an `sk-` key at one prompt.
+- **Organizers cannot stop keys; they ask the issuer** (Eli chose this over a
+  key-service `/workshop/stop` endpoint). Self-delete was tested and rejected:
+  see `references/workshop-signup.md`, "Key batches".
+- Batch files go to organizers by Slack DM or into their hub home; they get
+  copies of `docs/workshop-organizer.md` and `docs/hub-quickstart.md`, since
+  they have no repo.
+- Eli believed keys only work on the hub; they don't (the gateway is public,
+  the URL is readable by every hub user). Budget and expiry are the real limit.
+
+Follow-up outside this repo: `litellm-gateway-template/AGENTS.md` names
+`secrets/organizer-key` and "organizer's copy"; still works, but should say
+issuer. Existing installs keep stale `docs/organizer*.md` after re-rendering
+(render never deletes); remove them by hand.

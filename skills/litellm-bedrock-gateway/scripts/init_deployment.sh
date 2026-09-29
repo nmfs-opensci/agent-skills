@@ -10,7 +10,8 @@ mkdir -p "$dest/scripts" "$dest/assets"
 cp "$skill"/scripts/*.py "$skill"/scripts/*.sh "$skill"/scripts/requirements.txt "$dest/scripts/"
 cp "$skill"/assets/gateway-template.yaml "$skill"/assets/keyservice.py "$skill"/assets/hub-signup.sh \
    "$skill"/assets/participant-quickstart.md "$skill"/assets/hub-quickstart.md \
-   "$skill"/assets/organizer.md "$skill"/assets/organizer-no-aws.md "$dest/assets/"
+   "$skill"/assets/key-issuer.md "$skill"/assets/issuer-no-aws.md \
+   "$skill"/assets/workshop-organizer.md "$dest/assets/"
 [ -e "$dest/gateway.env" ] || cp "$skill/assets/gateway.env.example" "$dest/gateway.env"
 [ -e "$dest/models.yaml" ] || cp "$skill/assets/models.yaml" "$dest/models.yaml"
 [ -e "$dest/.gitignore" ] || cp "$skill/assets/gitignore" "$dest/.gitignore"

@@ -4,14 +4,18 @@ Run from the deployment folder after `source gateway.env`:
 
   python scripts/workshop.py plan --workshop whale --organizer jane-blow --dates "14-15 Oct 2026" \
       --people 25 --budget 20 --days 7 --hours 4
+  python scripts/workshop.py plan --workshop orca --organizer sam --issuer eli --dates "3 Nov 2026" \
+      --people 15 --budget 20 --days 7 --batch    # keys handed out, no sign-up
   python scripts/workshop.py open --workshop whale --code whale-2026 --hours 4 --budget 20 --days 7 --max 25
   python scripts/workshop.py status                     # every workshop, one line each
   python scripts/workshop.py status --workshop whale    # who has a key, with spend
   python scripts/workshop.py close --workshop whale
 
 `plan` writes docs/workshops/<name>.md, a committed record of the workshop's
-settings with the exact `open` command to run on the day (without the code,
-which is chosen then, and without the gateway URL). It contacts nothing.
+settings with the exact commands for it: `open` for sign-up (without the code,
+which is chosen on the day), or `keys.py batch` for a batch of keys the key
+issuer hands to the organizer (--batch). Never the gateway URL. It contacts
+nothing.
 
 Several workshops can be open at once on one gateway; each has its own name
 (lowercase letters and digits), code, key cap, budget and expiry, and the code
@@ -24,8 +28,9 @@ defaults for them. Block or delete one key with keys.py
 sign up again.
 
 Finds the gateway and admin key the way keys.py does, so it works without AWS
-when secrets/gateway-url and secrets/organizer-key exist. Any admin key can open,
-close and see every workshop. Prints no key values.
+when secrets/gateway-url and secrets/issuer-key exist. Any admin key can open,
+close and see every workshop. `status --workshop` also lists a batch-only
+workshop's keys. Prints no key values.
 """
 
 import argparse
@@ -53,7 +58,57 @@ def plan(args):
     path = pathlib.Path("docs/workshops") / f"{args.workshop}.md"
     if path.exists() and not args.force:
         sys.exit(f"{path} exists; add --force to replace it.")
-    aws = "yes" if args.organizer_aws else "no: runs it with an organizer key (docs/organizer-no-aws.md)"
+    issuer = args.issuer or ("the installer" if args.batch else args.organizer)
+    if args.batch:
+        cmd = os.environ.get("GATEWAY_HUB_COMMAND", "claude-workshop")
+        hub = os.environ.get("GATEWAY_HUB_DIR", "~/shared/workshop").rstrip("/")
+        text = f"""# Workshop `{args.workshop}`
+
+Written by `scripts/workshop.py plan` for the gateway `{os.environ["GATEWAY_STACK"]}`.
+It holds no key or URL: the keys go to the organizer privately, and so does
+the gateway URL if anyone needs it.
+
+| | |
+| --- | --- |
+| Organizer | {args.organizer} (hands out keys; needs only a hub account) |
+| Key issuer | {issuer} (makes the keys, stops one if needed) |
+| Dates | {args.dates} |
+| People | {args.people} ({args.max} keys, in a batch) |
+| Budget per key | ${args.budget:g} |
+| Keys last | {args.days} days from when the batch is made |
+
+## Before the workshop: the key issuer
+
+Close to the workshop (keys expire {args.days} days after they are made):
+
+```bash
+source gateway.env
+python scripts/keys.py batch --workshop {args.workshop} --count {args.max} --budget {args.budget:g} --days {args.days}
+```
+
+Send `secrets/{args.workshop}-keys.txt` to {args.organizer} privately (a direct
+message, or copy it into their hub home folder), with a copy of
+`docs/workshop-organizer.md` and `docs/hub-quickstart.md`: {args.organizer}
+has no copy of this repository.
+
+## During the workshop
+
+The organizer gives one key per person; participants run the hub command and
+paste their key. The organizer checks spend with
+`{hub}/{cmd} --status ~/{args.workshop}-keys.txt`. To stop a key, the key
+issuer runs:
+
+```bash
+python scripts/workshop.py status --workshop {args.workshop}   # every key, with spend
+python scripts/keys.py block ws-{args.workshop}-07
+```
+
+Keys are named `ws-{args.workshop}-01` and up. More in `docs/key-issuer.md`.
+"""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+        print(f"Wrote {path}. Commit it; it holds no secret.")
+        return
     text = f"""# Workshop `{args.workshop}`
 
 Written by `scripts/workshop.py plan` for the gateway `{os.environ["GATEWAY_STACK"]}`.
@@ -63,7 +118,7 @@ room, and the gateway URL goes to people privately.
 | | |
 | --- | --- |
 | Organizer | {args.organizer} |
-| Organizer has AWS access | {aws} |
+| Opens sign-up | {issuer} (needs AWS or an issuer key, docs/issuer-no-aws.md) |
 | Dates | {args.dates} |
 | People | {args.people} (at most {args.max} keys) |
 | Budget per key | ${args.budget:g} |
@@ -82,7 +137,7 @@ python scripts/workshop.py status --workshop {args.workshop}   # who has a key, 
 python scripts/workshop.py close --workshop {args.workshop}
 ```
 
-Keys are named `ws-{args.workshop}-<hub username>`. More in `docs/organizer.md`.
+Keys are named `ws-{args.workshop}-<hub username>`. More in `docs/key-issuer.md`.
 """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -117,7 +172,9 @@ def main():
     pl = sub.add_parser("plan", help="write docs/workshops/<name>.md; contacts nothing")
     settings(pl)
     pl.add_argument("--organizer", required=True, help="who runs it, as people know them")
-    pl.add_argument("--organizer-aws", action="store_true", help="the organizer has AWS access")
+    pl.add_argument("--issuer", help="who makes the keys or opens sign-up (default: the organizer; "
+                                     "with --batch, the installer)")
+    pl.add_argument("--batch", action="store_true", help="the organizer hands out a batch of keys; no sign-up")
     pl.add_argument("--dates", required=True, help='when it runs, as text: "14-15 Oct 2026"')
     pl.add_argument("--people", type=int, required=True, help="how many are expected")
     pl.add_argument("--max", type=int, help="most keys (default: --people)")
@@ -161,10 +218,13 @@ def main():
         for n, w in workshops.items():
             print(describe(n, w, now))
         return
-    if name not in workshops:
-        sys.exit(f"No workshop named {name!r}. Known: {', '.join(workshops) or 'none'}.")
-    print(describe(name, workshops[name], now))
     rows = [k for k in Gateway(url, key).keys() if (k.get("metadata") or {}).get("workshop") == name]
+    if name in workshops:
+        print(describe(name, workshops[name], now))
+    elif rows:
+        print(f"{name}: no sign-up; {len(rows)} key(s) made with keys.py batch.")
+    else:
+        sys.exit(f"No workshop named {name!r}. With sign-up: {', '.join(workshops) or 'none'}.")
     print_keys(rows)
 
 

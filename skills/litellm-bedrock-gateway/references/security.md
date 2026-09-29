@@ -24,12 +24,20 @@
   key service never returns a key that already exists, refuses wrong codes
   slowly, caps the number of keys, and closes by itself; its admin route needs
   an admin key, checked with LiteLLM on every request (`workshop-signup.md`).
-- **Organizers without AWS get their own revocable admin key, never the master
+- **Key issuers without AWS get their own revocable admin key, never the master
   key or the Admin UI password**, neither of which can be revoked or rotated
-  here. `keys.py organizer revoke` stops a key at once, but not what it already
+  here. `keys.py issuer revoke` stops a key at once, but not what it already
   did: an admin key can create more admins (the revoke lists them) and change
   proxy settings (nothing detects that). Tested on LiteLLM 1.102.1
   (`workshop-signup.md`).
+- **A workshop organizer with a batch of keys holds no admin key.** The hub
+  script's `--status` asks each key about itself only. Participant keys cannot
+  delete, block or update any key, their own included (401, tested on 1.102.1).
+  Letting keys delete themselves through an `internal_user` owner was
+  rejected: such a key can also mint new keys without budget or expiry
+  (`workshop-signup.md`, "Key batches").
+- **A key works from anywhere that has the gateway URL**, not only the hub.
+  Per-key budget and expiry bound a leaked key until it is blocked.
 - **No committed file holds the gateway URL**, because install repos are
   often public. It lives in `secrets/gateway-url`.
 - **Admin UI with its own password**, so the master key is never typed into a

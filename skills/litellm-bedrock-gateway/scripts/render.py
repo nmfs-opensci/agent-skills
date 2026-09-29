@@ -12,9 +12,10 @@ Writes into build/ (git-ignored):
 and this install's docs and hub script, meant to be committed:
   docs/participant-quickstart.md  setup for Claude Code, OpenCode, Copilot CLI
   docs/hub-quickstart.md          JupyterHub sign-up, for participants
-  docs/organizer.md               keys, sign-up, spend
-  docs/organizer-no-aws.md        running the gateway without AWS access
-  hub/<GATEWAY_HUB_COMMAND>       the JupyterHub sign-up script
+  docs/key-issuer.md              keys, batches, sign-up, spend
+  docs/issuer-no-aws.md           issuing keys without AWS access
+  docs/workshop-organizer.md      handing out a batch of keys, hub only
+  hub/<GATEWAY_HUB_COMMAND>       the JupyterHub script (sign-up, key, status)
 
 None of them holds the gateway URL, because install repos are often public:
 the URL lives in secrets/gateway-url (written by deploy.sh), and the hub
@@ -41,7 +42,8 @@ MARKER = "# @@MODEL_RESOURCES@@"
 NAME = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
 TIERS = ("opus", "sonnet", "haiku")
 COMMAND = re.compile(r"^[a-z][a-z0-9-]{1,39}$")
-DOCS = ("participant-quickstart.md", "hub-quickstart.md", "organizer.md", "organizer-no-aws.md")
+DOCS = ("participant-quickstart.md", "hub-quickstart.md", "key-issuer.md", "issuer-no-aws.md",
+        "workshop-organizer.md")
 
 
 def fail(msg):

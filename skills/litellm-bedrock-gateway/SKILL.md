@@ -1,6 +1,6 @@
 ---
 name: litellm-bedrock-gateway
-description: Set up, verify, run, and tear down a LiteLLM gateway on AWS that lets workshop or clinic participants use coding agents (Claude Code, OpenCode, GitHub Copilot CLI) with Amazon Bedrock models through personal virtual keys with their own budgets and expiry dates, without handing out AWS credentials. Includes adding named workshops to a running gateway, workshop sign-up from a JupyterHub with a code said in the room, and running the event as an organizer with no AWS access. Use when asked to give a group access to Claude or other Bedrock models from coding tools, to deploy or update LiteLLM in front of Bedrock, to get an AWS account ready for Bedrock (Anthropic use-case form, Marketplace subscription, quotas, payment method), to diagnose why Bedrock refuses a model, to create, limit, block, or monitor participants' keys, to open or close workshop sign-up on a JupyterHub, to estimate what a coding-agent workshop will cost, or to stop or remove the gateway afterwards.
+description: Set up, verify, run, and tear down a LiteLLM gateway on AWS that lets workshop or clinic participants use coding agents (Claude Code, OpenCode, GitHub Copilot CLI) with Amazon Bedrock models through personal virtual keys with their own budgets and expiry dates, without handing out AWS credentials. Includes named workshops on a running gateway, JupyterHub sign-up with a code said in the room, key batches for an organizer with only a hub account, and issuing keys without AWS access. Use when asked to give a group access to Claude or other Bedrock models from coding tools, to deploy or update LiteLLM in front of Bedrock, to get an AWS account ready for Bedrock (Anthropic use-case form, Marketplace subscription, quotas, payment method), to diagnose why Bedrock refuses a model, to create, limit, block, or monitor participants' keys or a batch of them, to open or close workshop sign-up on a JupyterHub, to estimate what a coding-agent workshop will cost, or to stop or remove the gateway afterwards.
 ---
 
 # LiteLLM gateway to Amazon Bedrock
@@ -34,9 +34,9 @@ repository:
   deployed directly).
 - `assets/keyservice.py` — the workshop key service run beside LiteLLM.
 - `assets/*.md` and `assets/hub-signup.sh` — templates `render.py` fills in as
-  each install's `docs/` (participant quickstart, hub quickstart, organizer
-  guide, organizer without AWS) and `hub/<command>` (the JupyterHub sign-up
-  script).
+  each install's `docs/` (participant quickstart, hub quickstart, key issuer
+  guide, key issuer without AWS, workshop organizer) and `hub/<command>` (the
+  JupyterHub script: sign-up, a pasted key, or a batch's status).
 - `scripts/` — `init_deployment.sh`, `inspect_account.py`, `check_bedrock.py`,
   `deploy.sh`, `keys.py`, `workshop.py`, `check_gateway.py`, `instance.sh`,
   `tunnel.sh`, `teardown.sh`.
@@ -84,14 +84,16 @@ resources.
    HTTPS, then a real coding tool with a test key, then spend recorded on the
    key. Report what ran, not what should work.
 8. **Hand out keys and watch spend** — `references/keys-and-monitoring.md` and
-   `references/clients.md`. Organizers create every key and send it privately,
-   or open JupyterHub sign-up (`references/workshop-signup.md`), which also
-   covers an organizer without AWS access.
+   `references/clients.md`. Key issuers create every key and send it
+   privately, hand a batch of keys to a workshop organizer, or open JupyterHub
+   sign-up (`references/workshop-signup.md`, which also covers the three roles
+   and a key issuer without AWS access).
 9. **Add a workshop, as often as needed** — `references/add-a-workshop.md`.
-   Asks that workshop's questions (name, organizer and whether they have AWS,
-   dates, people, budget, days), makes an organizer key if needed, checks the
-   hub script is in place, and records it with `workshop.py plan` in
-   `docs/workshops/<name>.md`. It does not open sign-up.
+   Asks that workshop's questions (name, organizer, who issues its keys,
+   sign-up or a batch, dates, people, budget, days), makes an issuer key if
+   needed, checks the hub script is in place, and records it with
+   `workshop.py plan` in `docs/workshops/<name>.md`. It does not open sign-up
+   or make a batch early.
 10. **Operate and finish** — `references/operate.md`: scaling, stopping
     between sessions, teardown.
 
@@ -110,12 +112,14 @@ Security choices and the reasons behind them: `references/security.md`.
   `secrets/<name>.key` (mode 600, git-ignored). Check health through
   `scripts/instance.sh health`, not by reading container logs, which can
   contain the database URL.
-- **Organizers create every key and send it privately** (a direct message,
-  never a shared channel or list), or participants get their own through
-  workshop sign-up. Keys are per person: never share one.
-- **The master key and the Admin UI password never leave the installer.** An
-  organizer without AWS gets their own revocable admin key
-  (`keys.py organizer create`), never either of those: neither can be revoked.
+- **Key issuers create every key and send it privately** (a direct message,
+  never a shared channel or list; a batch file to its organizer the same way),
+  or participants get their own through workshop sign-up. Keys are per person:
+  never share one.
+- **The master key and the Admin UI password never leave the installer.** A
+  key issuer without AWS gets their own revocable admin key
+  (`keys.py issuer create`), never either of those: neither can be revoked.
+  A workshop organizer who only hands out a batch gets no admin key at all.
 - **No committed file holds the gateway URL.** Install repos are often public;
   the URL lives in `secrets/gateway-url` and goes out privately.
 - **One list of models.** Change `models.yaml`, then `scripts/deploy.sh`. It

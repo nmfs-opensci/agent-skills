@@ -61,15 +61,24 @@ account.)
 > The gateway is in our IT group's AWS account and I'm not allowed in it. I'm
 > running the workshop. What do I need from them, and how do I manage keys?
 
-## 11. Two workshops, and a lost organizer key
+## 11. Two workshops, and a lost issuer key
 
 > Next week Maria and Lee each run their own workshop on our gateway, at the
 > same time. Neither has AWS access. Also, Maria's laptop was just stolen and
-> her organizer key was on it. What do we do?
+> her issuer key was on it. What do we do?
 
 ## 12. Add a workshop
 
 > Set up a workshop named "orca" with organizer "jane-blow".
+
+(The gateway is already deployed and verified with this skill, with a
+JupyterHub hub script. Planning and local files only.)
+
+## 13. A batch of keys for an organizer with only a hub account
+
+> I'm a hub admin and I have an issuer key for our gateway, but no AWS. Sam is
+> running a workshop for 15 people on our hub next month; Sam has a hub account
+> and nothing else. How do I get Sam keys to hand out?
 
 (The gateway is already deployed and verified with this skill, with a
 JupyterHub hub script. Planning and local files only.)
