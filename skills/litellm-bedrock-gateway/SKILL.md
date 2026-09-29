@@ -1,6 +1,6 @@
 ---
 name: litellm-bedrock-gateway
-description: Set up, verify, run, and tear down a LiteLLM gateway on AWS that lets workshop or clinic participants use coding agents (Claude Code, OpenCode, GitHub Copilot CLI) with Amazon Bedrock models through personal virtual keys with their own budgets and expiry dates, without handing out AWS credentials. Includes workshop sign-up from a JupyterHub with a code said in the room, and running the event as an organizer with no AWS access. Use when asked to give a group access to Claude or other Bedrock models from coding tools, to deploy or update LiteLLM in front of Bedrock, to get an AWS account ready for Bedrock (Anthropic use-case form, Marketplace subscription, quotas, payment method), to diagnose why Bedrock refuses a model, to create, limit, block, or monitor participants' keys, to open or close workshop sign-up on a JupyterHub, to estimate what a coding-agent workshop will cost, or to stop or remove the gateway afterwards.
+description: Set up, verify, run, and tear down a LiteLLM gateway on AWS that lets workshop or clinic participants use coding agents (Claude Code, OpenCode, GitHub Copilot CLI) with Amazon Bedrock models through personal virtual keys with their own budgets and expiry dates, without handing out AWS credentials. Includes adding named workshops to a running gateway, workshop sign-up from a JupyterHub with a code said in the room, and running the event as an organizer with no AWS access. Use when asked to give a group access to Claude or other Bedrock models from coding tools, to deploy or update LiteLLM in front of Bedrock, to get an AWS account ready for Bedrock (Anthropic use-case form, Marketplace subscription, quotas, payment method), to diagnose why Bedrock refuses a model, to create, limit, block, or monitor participants' keys, to open or close workshop sign-up on a JupyterHub, to estimate what a coding-agent workshop will cost, or to stop or remove the gateway afterwards.
 ---
 
 # LiteLLM gateway to Amazon Bedrock
@@ -51,15 +51,19 @@ public) repository: `docs/` and `hub/` are committed, while `secrets/` and
 
 ## The order of work
 
-Each step gates the next. Stop and ask before anything that creates billed
+Each step gates the next. Steps 1–8 set up the gateway once; step 9
+repeats for each workshop. Stop and ask before anything that creates billed
 resources.
 
-1. **Ask the installer**: which AWS account, and what kind (classic,
-   organization member, or "new experience"); Region; domain name or
-   `sslip.io`; whether the Admin UI is public or only through the tunnel;
-   which models; how many people, for how long, and the budget per person;
-   whether people sign up from a JupyterHub (the hub script's name and shared
-   folder); and who organizes, and whether they have AWS access.
+1. **Ask the installer about the gateway**, not about a workshop: which AWS
+   account, and what kind (classic, organization member, or "new
+   experience"); Region; domain name or `sslip.io`; whether the Admin UI is
+   public or only through the tunnel; which models; and whether people will
+   sign up from a JupyterHub, with the hub script's command name and shared
+   folder. One hub script serves every workshop on the gateway, so suggest a
+   generic name (`claude-workshop`), never one workshop's. Give a rough sense
+   of cost from `references/costs.md`. Budgets, dates, head counts and
+   organizers are per workshop: they come in step 9.
 2. **Sign in without long-lived keys** — `references/aws-access.md`. Clear any
    credentials the environment injects (JupyterHub roles, Bedrock API keys)
    before anything else, or every later command silently uses the wrong
@@ -83,10 +87,16 @@ resources.
    `references/clients.md`. Organizers create every key and send it privately,
    or open JupyterHub sign-up (`references/workshop-signup.md`), which also
    covers an organizer without AWS access.
-9. **Operate and finish** — `references/operate.md`: scaling, stopping between
-   sessions, teardown.
+9. **Add a workshop, as often as needed** — `references/add-a-workshop.md`.
+   Asks that workshop's questions (name, organizer and whether they have AWS,
+   dates, people, budget, days), makes an organizer key if needed, checks the
+   hub script is in place, and records it with `workshop.py plan` in
+   `docs/workshops/<name>.md`. It does not open sign-up.
+10. **Operate and finish** — `references/operate.md`: scaling, stopping
+    between sessions, teardown.
 
 Costs to tell organizers before they choose budgets: `references/costs.md`.
+When the gateway is already running, start at step 9 or 10, not step 1.
 Security choices and the reasons behind them: `references/security.md`.
 
 ## Non-negotiables

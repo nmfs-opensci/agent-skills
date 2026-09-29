@@ -11,10 +11,11 @@ You need nothing but this hub: no AI account and no AWS account.
    {{HUB_DIR}}/{{HUB_COMMAND}}
    ```
 
-3. Type the **workshop code** that {{ORGANIZER}} gives you.
+3. Type the **workshop code** that your workshop organizer gives you.
 
-It gets you a personal key (${{BUDGET}} to spend, lasts {{DAYS}} days),
-installs Claude Code if needed, and starts it. The first start asks a few setup
+It gets you a personal key, tells you how much it has to spend and when it
+expires (your organizer decides both), installs Claude Code if needed, and
+starts it. The first start asks a few setup
 questions: pick a theme and say yes to trusting the folder.
 
 ## After that
@@ -55,10 +56,10 @@ settings in `~/.claude`.
 
 - **"That workshop code is not right"**: check the code and try again.
 - **"A key for ... was already issued"**: you, or someone using your name,
-  already signed up. Ask {{ORGANIZER}}.
+  already signed up. Ask your workshop organizer.
 - **"All workshop keys are handed out"**, **"sign-up is closed"** or **"has
-  ended"**: ask {{ORGANIZER}}.
+  ended"**: ask your workshop organizer.
 - **A new workshop, and you still have a key from an earlier one**: run
   `{{HUB_COMMAND}} --reset`, then `{{HUB_COMMAND}}` and type the new code.
 - **"not set up yet"** or **"Could not reach the workshop gateway"**: the
-  gateway is not ready or is stopped. Ask {{ORGANIZER}}.
+  gateway is not ready or is stopped. Ask your workshop organizer.

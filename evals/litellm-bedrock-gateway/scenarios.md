@@ -66,3 +66,10 @@ account.)
 > Next week Maria and Lee each run their own workshop on our gateway, at the
 > same time. Neither has AWS access. Also, Maria's laptop was just stolen and
 > her organizer key was on it. What do we do?
+
+## 12. Add a workshop
+
+> Set up a workshop named "orca" with organizer "jane-blow".
+
+(The gateway is already deployed and verified with this skill, with a
+JupyterHub hub script. Planning and local files only.)

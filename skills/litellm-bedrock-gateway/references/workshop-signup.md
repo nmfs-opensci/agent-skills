@@ -30,7 +30,11 @@ usual way (`keys-and-monitoring.md`).
 - Issued keys are counted from LiteLLM itself (by `metadata.workshop`), so a
   restart loses nothing and deleting a key frees a slot.
 - Organizers drive it with `scripts/workshop.py open|close|status --workshop
-  <name>`, which posts to `/workshop/admin` with an **admin key**: the master
+  <name>`. `open` takes the workshop's `--budget`, `--days` and `--max` every
+  time (there are no gateway-wide defaults: they are per workshop); the
+  command with the right values is in `docs/workshops/<name>.md`, written by
+  `workshop.py plan` when the workshop was added (`add-a-workshop.md`).
+  `open`, `close` and `status` post to `/workshop/admin` with an **admin key**: the master
   key, or a key whose LiteLLM user has the `proxy_admin` role (an organizer
   key). The service asks LiteLLM (`GET /user/info` with the presented key) on
   every admin request, with no cache and a 5 s timeout, so a revoked key is

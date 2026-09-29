@@ -6,7 +6,7 @@ with Claude Code, OpenCode and GitHub Copilot CLI.
 
 ## 1. Basics (everyone)
 
-You need two things from {{ORGANIZER}}, both sent to you privately:
+You need two things from your organizer, both sent to you privately:
 
 - the **gateway URL** (starts with `https://`)
 - a **personal key** (starts with `sk-`). Keep it to yourself: it has its own
@@ -177,11 +177,11 @@ much less. A pause of more than five minutes pays that first cost again.
 
 ## 5. Troubleshooting
 
-- **Budget exceeded**: your key has used its spending limit. Ask {{ORGANIZER}}.
+- **Budget exceeded**: your key has used its spending limit. Ask your organizer.
 - **Key expired / blocked**: the key's time is up or it was switched off.
 - **Authentication error**: `GATEWAY_KEY` is wrong or incomplete; set it again.
 - **Connection refused / timeout**: the gateway server is stopped. Ask
-  {{ORGANIZER}}.
+  your organizer.
 - **No spend on your key after using a tool**: the tool bypassed the gateway,
   usually because an older setting (such as `CLAUDE_CODE_USE_BEDROCK`) is still
   set. For Claude Code, `/status` should show the gateway URL.

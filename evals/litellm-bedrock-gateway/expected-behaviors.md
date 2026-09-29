@@ -24,8 +24,11 @@ Grader's rubric. Do not show to the agent under evaluation.
 
 ## 1. Classic organization account
 
-- Asks the installer's choices first (account and Region, domain or sslip.io,
-  Admin UI public or tunnel, models, budget and days per person).
+- Asks the installer's gateway choices first (account and Region, domain or
+  sslip.io, Admin UI public or tunnel, models, whether a JupyterHub is used and
+  a generic hub command name). Treats budget, days, head count and organizer
+  as per-workshop questions for after the gateway works, while still giving a
+  rough cost sense for 25 people over two days.
 - Clears injected credentials (`gateway.env`), confirms identity, runs
   `inspect_account.py`, and checks SCPs/Region restrictions and quotas.
 - Checks quota against 25 concurrent Claude Code users and raises increases early.
@@ -89,8 +92,9 @@ Grader's rubric. Do not show to the agent under evaluation.
 
 - Uses the key service already on the gateway: copy `hub/<command>` and
   `secrets/gateway-url` (as `<command>.url`) into a shared folder participants
-  cannot change; `workshop.py open --workshop <name> --code ... --hours ...`
-  at the start.
+  cannot change; `workshop.py open --workshop <name> --code ... --hours ...
+  --budget ... --days ... --max ...` at the start (the command in
+  `docs/workshops/<name>.md` if the workshop was planned).
 - Points out that the command name must differ from any other gateway's hub
   script, and that `docs/hub-quickstart.md` is the participant page.
 - Explains what protects the keys: a code said in the room, a cap, an end
@@ -128,3 +132,19 @@ Grader's rubric. Do not show to the agent under evaluation.
   other organizer and all participants carry on unaffected.
 - Says that revoking does not undo proxy-setting changes the key may have made,
   and that nothing detects them.
+
+## 12. Add a workshop
+
+- Does not restart the gateway setup or re-ask gateway questions (account,
+  Region, models, hub command name).
+- Asks this workshop's questions: dates, how many people, budget per person,
+  how long keys last, and whether jane-blow has AWS access; gives a rough cost
+  sense from `costs.md`.
+- If jane-blow has no AWS access: `keys.py organizer create jane-blow`, and
+  says to send her that key and the gateway URL privately, never the master
+  key or the Admin UI password.
+- Checks the hub script and its `.url` are on the hub and current.
+- Writes the record with `workshop.py plan --workshop orca ...` into
+  `docs/workshops/orca.md` and commits it; it holds no code, key or URL.
+- Does not open sign-up; the organizer opens it on the day with the command
+  from the record.

@@ -18,13 +18,21 @@ it goes to people privately, with their key.
 ## Workshop sign-up on the JupyterHub
 
 People on the hub run `{{HUB_COMMAND}}`, type a code you say in the room, and
-get their own key: `ws-<workshop>-<hub username>`, ${{BUDGET}}, {{DAYS}} days.
-The participant page is `docs/hub-quickstart.md`.
+get their own key, `ws-<workshop>-<hub username>`, with the budget and expiry
+you chose for that workshop. The participant page is `docs/hub-quickstart.md`.
 
 Several workshops can run on this gateway at once. Each has a name (lowercase
 letters and digits, e.g. `whale`) and its own code, cap, budget and expiry; the
 code a participant types decides which workshop they join. Every organizer can
 see and change every workshop, so agree on names with the others.
+
+Each workshop's settings are in `docs/workshops/<name>.md`, written when it was
+planned, with the exact command to open it. To plan one:
+
+```bash
+python scripts/workshop.py plan --workshop whale --organizer jane-blow \
+  --dates "14-15 Oct 2026" --people 25 --budget 20 --days 7 --hours 4
+```
 
 **Once per hub** (and again after the script changes or the gateway URL
 changes), copy the script and the URL into the hub's shared folder:
@@ -37,18 +45,20 @@ cp secrets/gateway-url {{HUB_ADMIN_DIR}}/{{HUB_COMMAND}}.url
 Participants run it as `{{HUB_DIR}}/{{HUB_COMMAND}}`. Use a folder
 participants can read but not change.
 
-**When the workshop starts** (the code is not case-sensitive, and must differ
-from any other open workshop's):
+**When the workshop starts**, run the `open` command from its record with a
+code you choose now (the code is not case-sensitive, and must differ from any
+other open workshop's):
 
 ```bash
-python scripts/workshop.py open --workshop whale --code whale-2026 --hours 4
+python scripts/workshop.py open --workshop whale --code whale-2026 --hours 4 \
+  --budget 20 --days 7 --max 25
 python scripts/workshop.py status --workshop whale
 python scripts/workshop.py close --workshop whale
 ```
 
-`open` defaults to ${{BUDGET}} per key, {{DAYS}} days and at most
-{{MAX_KEYS}} keys; `--budget`, `--days` and `--max` change them. Sign-up also
-ends by itself after `--hours`. `status --workshop whale` lists who has a key
+`--budget` is US dollars per key, `--days` how long each key lasts, and
+`--max` the most keys the workshop hands out. Sign-up also ends by itself
+after `--hours`. `status --workshop whale` lists who has a key
 in that workshop, with spend, budget, expiry and whether it is blocked;
 `status` alone gives one line per workshop. To stop someone, block or delete
 their key. If someone lost their key or took the wrong name, delete it and they

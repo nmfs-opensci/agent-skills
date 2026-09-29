@@ -21,7 +21,10 @@ the URL lives in secrets/gateway-url (written by deploy.sh), and the hub
 script reads it from <command>.url beside it on the hub.
 
 Reads AWS_REGION, GATEWAY_STACK, GATEWAY_ADMIN_UI (public | tunnel) and the
-GATEWAY_HUB_* / GATEWAY_WORKSHOP_* / GATEWAY_ORGANIZER settings (gateway.env).
+GATEWAY_HUB_* settings (gateway.env). Everything here is per gateway: one
+gateway serves several workshops, so nothing a workshop decides (budget,
+expiry, organizer) is written into these files; `workshop.py plan` records
+those in docs/workshops/<name>.md.
 """
 
 import argparse
@@ -174,25 +177,18 @@ def caddyfile(admin_ui):
 
 
 def settings():
-    """Install settings from gateway.env, with the workshop defaults."""
+    """Install settings from gateway.env."""
     env = os.environ.get
     s = {
         "stack": env("GATEWAY_STACK") or fail("GATEWAY_STACK is not set: source gateway.env first"),
         "command": env("GATEWAY_HUB_COMMAND") or "claude-workshop",
         "hub_dir": (env("GATEWAY_HUB_DIR") or "~/shared/workshop").rstrip("/"),
         "hub_admin_dir": (env("GATEWAY_HUB_ADMIN_DIR") or env("GATEWAY_HUB_DIR") or "~/shared/workshop").rstrip("/"),
-        "organizer": env("GATEWAY_ORGANIZER") or "the organizer",
     }
     if not COMMAND.match(s["command"]):
         fail("GATEWAY_HUB_COMMAND: lowercase letters, digits and '-', starting with a letter")
     if s["command"] == "claude":
         fail("GATEWAY_HUB_COMMAND must not be claude: participants keep their own claude")
-    for k, default, kind in (("budget", "20", float), ("days", "7", int), ("max", "20", int)):
-        raw = env(f"GATEWAY_WORKSHOP_{k.upper()}") or default
-        try:
-            s[k] = kind(raw)
-        except ValueError:
-            fail(f"GATEWAY_WORKSHOP_{k.upper()}={raw!r} is not a number")
     return s
 
 
@@ -236,10 +232,6 @@ def docs(spec, tiers, s):
         "HUB_COMMAND": s["command"],
         "HUB_DIR": s["hub_dir"],
         "HUB_ADMIN_DIR": s["hub_admin_dir"],
-        "ORGANIZER": s["organizer"],
-        "BUDGET": f"{s['budget']:g}",
-        "DAYS": s["days"],
-        "MAX_KEYS": s["max"],
     }
     out = {f"docs/{name}": fill((ROOT / "assets" / name).read_text(), values, name) for name in DOCS}
     out[f"hub/{s['command']}"] = fill((ROOT / "assets" / "hub-signup.sh").read_text(), values, "hub-signup.sh")

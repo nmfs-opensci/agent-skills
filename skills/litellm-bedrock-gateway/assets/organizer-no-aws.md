@@ -49,12 +49,14 @@ When both files exist, the scripts use them and do not need AWS.
 source gateway.env
 ```
 
-Then the commands in `docs/organizer.md` work as usual. Give your workshop a
-name of lowercase letters and digits; other organizers may run workshops on the
-same gateway at the same time, each with its own name and code:
+Then the commands in `docs/organizer.md` work as usual. Your workshop's name
+and settings are in `docs/workshops/<name>.md`, with the exact command to open
+it; other organizers may run workshops on the same gateway at the same time,
+each with its own name and code:
 
 ```bash
-python scripts/workshop.py open --workshop whale --code whale-2026 --hours 4
+python scripts/workshop.py open --workshop whale --code whale-2026 --hours 4 \
+  --budget 20 --days 7 --max 25
 python scripts/workshop.py status --workshop whale   # who has a key, and spend
 python scripts/keys.py block ws-whale-someone        # or delete
 python scripts/workshop.py close --workshop whale

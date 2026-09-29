@@ -22,7 +22,7 @@ KEYFILE="$DIR/key"
 
 GATEWAY_URL=""
 [ -r "$HERE/$CMD.url" ] && GATEWAY_URL="$(tr -d '[:space:]' < "$HERE/$CMD.url")"
-[ -n "$GATEWAY_URL" ] || { echo "$CMD is not set up yet ($CMD.url is missing). Ask {{ORGANIZER}}."; exit 1; }
+[ -n "$GATEWAY_URL" ] || { echo "$CMD is not set up yet ($CMD.url is missing). Ask your workshop organizer."; exit 1; }
 
 # So that plain `$CMD` works from now on. A new hub account may have no
 # startup files, with ~/.local/bin not on its PATH, so add it. Hub terminals
@@ -52,7 +52,7 @@ case "${1:-}" in
   --reset)
     rm -f "$KEYFILE"
     echo "Forgot your key. For a new workshop, run $CMD and type its code;"
-    echo "to sign up again for the same one, ask {{ORGANIZER}} first."; exit 0 ;;
+    echo "to sign up again for the same one, ask your workshop organizer first."; exit 0 ;;
   --budget)
     [ -s "$KEYFILE" ] || { echo "No key yet: run $CMD first."; exit 1; }
     curl -fsS "$GATEWAY_URL/key/info" -H "Authorization: Bearer $(tr -d '[:space:]' < "$KEYFILE")" | python3 -c '
@@ -68,7 +68,7 @@ if [ ! -s "$KEYFILE" ]; then
   read -rp "Workshop code: " code || { echo; echo "No code entered."; exit 1; }
   reply=$(curl -sS "$GATEWAY_URL/workshop/key" -H 'Content-Type: application/json' \
     -d "$(python3 -c 'import json,sys; print(json.dumps({"code": sys.argv[1], "user": sys.argv[2]}))' "$code" "$user")") \
-    || { echo "Could not reach the workshop gateway. Try again, or ask {{ORGANIZER}}."; exit 1; }
+    || { echo "Could not reach the workshop gateway. Try again, or ask your workshop organizer."; exit 1; }
   key=$(json key <<<"$reply" 2>/dev/null || true)
   if [ -z "$key" ]; then
     echo "$(json error <<<"$reply" 2>/dev/null || echo "Unexpected reply from the gateway.")"
