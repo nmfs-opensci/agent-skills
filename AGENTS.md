@@ -23,3 +23,6 @@ Task-specific workflows belong in individual skills, not in this file.
 
 Repository contribution conventions belong in this `AGENTS.md` and
 `CONTRIBUTING.md`; reusable task instructions belong under `skills/`.
+
+`CLAUDE.md` contains only `@AGENTS.md`, which makes Claude Code read this file;
+other agents read `AGENTS.md` directly. Edit `AGENTS.md`, not `CLAUDE.md`.
