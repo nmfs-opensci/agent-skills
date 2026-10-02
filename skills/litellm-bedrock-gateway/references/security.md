@@ -50,3 +50,43 @@
   JupyterLab checkpoint copies.
 - **Short lives.** Give keys an expiry that ends with the event, and stop or
   tear down the instance when it is not in use.
+
+## Sharing an account with other infrastructure
+
+The gateway is often built in an account that already runs something people
+depend on, such as the JupyterHub its participants use. Tested 2026-10-02 in
+such an account (an EKS-based hub in the same Region):
+
+- **Every script that changes AWS checks where it is.** `scripts/guard.sh`,
+  sourced by `deploy.sh`, `teardown.sh`, `instance.sh` and `tunnel.sh`,
+  refuses to run unless the signed-in account is `GATEWAY_ACCOUNT`, and
+  refuses any existing stack named `GATEWAY_STACK` whose description is not
+  the gateway template's. Without it, a mistyped stack name would let
+  `deploy.sh` replace another stack's resources with the gateway's and
+  `teardown.sh` delete it. `instance.sh` and `tunnel.sh` also check that the
+  instance carries the stack's `aws:cloudformation:stack-name` tag.
+- **An update is shown before it is applied.** `deploy.sh` creates a change
+  set for an existing stack, prints it, and needs the stack name typed back
+  if anything would be removed or replaced.
+- **Teardown deletes only by exact name.** It lists the stack's resources
+  and the seven parameters it will delete before asking; CloudFormation
+  removes only what the stack created. It prints the two hub files to remove
+  by hand, and nothing else.
+- **The instance role cannot read other parameters.**
+  `AmazonSSMManagedInstanceCore` allows `ssm:GetParameter` and
+  `ssm:GetParameters` on every parameter in the account, so the template adds
+  an explicit Deny for everything outside `/<stack>/*`. Checked with the IAM
+  policy simulator: its own parameters `allowed`, any other `explicitDeny`.
+- **Nothing in the template is account-wide or named.** It makes its own VPC
+  (no peering), and its role, profile and security group get generated names,
+  so none can collide with existing ones.
+- **Shared quotas.** The gateway takes one VPC and one Elastic IP (default
+  quotas 5 each per Region) and 2 vCPUs of the on-demand Standard quota.
+  `inspect_account.py` reports the counts; check there is room for the other
+  infrastructure to grow (an EKS cluster rebuilt with highly available NAT
+  needs a VPC and up to three Elastic IPs).
+- **The installer's own credentials are the remaining risk.** Installing
+  needs broad rights in the account, and an agent working with them could
+  change anything. A policy limited to the gateway's resources has not been
+  worked out; until it is, keep to the scripts and ask before any other AWS
+  command that is not read-only.

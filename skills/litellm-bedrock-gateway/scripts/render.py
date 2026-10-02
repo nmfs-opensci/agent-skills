@@ -41,6 +41,13 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 MARKER = "# @@MODEL_RESOURCES@@"
 NAME = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
 TIERS = ("opus", "sonnet", "haiku")
+# Optional models.yaml price fields (USD per million tokens) and the LiteLLM
+# parameters they become when a model is priced in config.
+CACHE_PRICES = {
+    "cache_write_price": "cache_creation_input_token_cost",
+    "cache_write_1h_price": "cache_creation_input_token_cost_above_1hr",
+    "cache_read_price": "cache_read_input_token_cost",
+}
 COMMAND = re.compile(r"^[a-z][a-z0-9-]{1,39}$")
 DOCS = ("participant-quickstart.md", "hub-quickstart.md", "key-issuer.md", "issuer-no-aws.md",
         "workshop-organizer.md")
@@ -82,6 +89,12 @@ def load(path):
         m.setdefault("price_source", "litellm" if m["api"] == "invoke" else "config")
         if m["price_source"] not in ("litellm", "config"):
             fail(f"{n}: price_source must be litellm or config")
+        # A Claude model newer than LiteLLM's cost map must carry its cache
+        # rates too: a coding agent's spend is mostly cache writes and reads.
+        if m["price_source"] == "config" and m.get("cache"):
+            for k in CACHE_PRICES:
+                if not isinstance(m.get(k), (int, float)):
+                    fail(f"{n}: {k} (USD per million tokens) is required when a cached model is priced in config")
         t = m.get("claude_code_tier")
         if t:
             if t not in TIERS:
@@ -141,6 +154,9 @@ def litellm_config(spec):
         if m["price_source"] == "config":
             p["input_cost_per_token"] = float(f"{m['input_price'] / 1e6:.6g}")
             p["output_cost_per_token"] = float(f"{m['output_price'] / 1e6:.6g}")
+            for k, param in CACHE_PRICES.items():
+                if isinstance(m.get(k), (int, float)):
+                    p[param] = float(f"{m[k] / 1e6:.6g}")
         entries.append({"model_name": m["name"], "litellm_params": p})
     config = {
         "model_list": entries,

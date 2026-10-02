@@ -18,8 +18,23 @@ not deploy until every model passes.
    `otherIndustryOption`, `useCases`). The installer fills in the answers: they
    are statements to Anthropic on the organization's behalf, so never invent
    them. In an Organization, the form submitted in the **management account
-   covers the member accounts**. Missing form: `Model use case details have not
-   been submitted`. `check_bedrock.py` reports whether one is on record.
+   covers the member accounts**; a standalone account submits its own. Missing
+   form: `Model use case details have not been submitted`. `check_bedrock.py`
+   reports whether one is on record.
+
+   Details from one submission (standalone account, 2026-10-02; Provisional):
+   - AWS documents no allowed values. `intendedUsers` is a string, commonly
+     reported as `"0"` internal, `"1"` external, `"2"` both; `industryOption`
+     looked free-text, with `otherIndustryOption` for anything beyond it. Ask
+     the installer which applies rather than choosing for them.
+   - Pass `formData=json.dumps(form).encode()`. Reading it back with
+     `get_use_case_for_model_access()` returns base64 of that JSON, so decode
+     before `json.loads`.
+   - **Submitting it can briefly break a model that worked.** Claude Haiku 4.5
+     answered in the grace period, then, minutes after the form went in,
+     refused with "If you have already filled out the form, try again in 15
+     minutes". Sixteen minutes later every model passed. Do not read that
+     refusal as a rejected form; wait and re-run `check_bedrock.py`.
 3. **Marketplace subscription.** It completes automatically on the first call to
    each Claude model, but only from an identity allowed
    `aws-marketplace:Subscribe` (AdministratorAccess is). The gateway's instance
@@ -37,7 +52,10 @@ not deploy until every model passes.
 
 - **The first-call grace period.** A new account can answer Claude for a while
   before the use-case form is enforced, then start refusing. A success on day one
-  proves little: re-run `check_bedrock.py` a day or two before the event.
+  proves little: re-run `check_bedrock.py` a day or two before the event. It is
+  not only new accounts: an established standalone account (already running
+  other workloads, no form on record) also answered Claude until the form was
+  submitted.
 - **Blaming the form for an account problem.** Always call a non-Anthropic model
   as well (`check_bedrock.py` calls `openai.gpt-oss-20b-1:0` by default; pass
   `--control` for another). If *it* fails too, the problem is the account
@@ -53,6 +71,8 @@ not deploy until every model passes.
 | one model throttled or "too many tokens" | quota for that model |
 | "invalid model identifier" | wrong ID for this Region; check with `inspect_account.py` |
 | "on-demand throughput isn't supported" | call it through an inference profile (`inference_profile: us`) |
+| "use case details", right after submitting the form | the form is taking effect; retry in 15 minutes |
+| `ServiceUnavailableException`, "unable to process your request" | transient on Bedrock's side; retry. Seen intermittently on a new model (Opus 5.5) that passed on the next call |
 
 ## Related Bedrock facts
 

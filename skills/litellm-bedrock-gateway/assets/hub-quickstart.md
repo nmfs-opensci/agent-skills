@@ -42,8 +42,11 @@ shows up about a minute after you use Claude.
 
 ## Useful
 
-- Inside Claude Code: `/model` switches models, for example
-  `/model {{STRONGER_MODEL}}`. The default, {{DEFAULT_LABEL}}, is the cheapest.
+- Inside Claude Code: `/model` switches models. Its list shows every model
+  your key may use (scroll down past the Claude ones), or type a name, for
+  example `/model {{STRONGER_MODEL}}`. To start on a model, give it to the
+  command: `{{HUB_COMMAND}} --model {{STRONGER_MODEL}}`. The default,
+  {{DEFAULT_LABEL}}, is the cheapest Claude model.
 - Your key is yours: it is saved in `~/.config/{{HUB_COMMAND}}/key` and use is
   recorded against it. Do not share it. If you were given it in a message,
   you can delete the message once it works.

@@ -46,8 +46,21 @@ def identity():
     me = session.client("sts").get_caller_identity()
     print(f"  profile {session.profile_name}, region {REGION}")
     print(f"  {mask(me['Arn'])}")
-    org = attempt("organization",
-                  lambda: session.client("organizations").describe_organization()["Organization"])
+    try:
+        org = session.client("organizations").describe_organization()["Organization"]
+    except ClientError as e:
+        org = None
+        if e.response["Error"]["Code"] == "AWSOrganizationsNotInUseException":
+            # Installers often say "organization" for their institution; this
+            # is the AWS sense, which decides whether SCPs and an inherited
+            # Anthropic form can apply.
+            print("  standalone account: not in an AWS Organization (no SCPs; it needs")
+            print("  its own payment method and Anthropic use-case form)")
+        else:
+            print(f"  organization: {e.response['Error']['Code']}")
+    except Exception as e:  # noqa: BLE001 - report and keep going
+        org = None
+        print(f"  organization: {type(e).__name__}: {e}")
     if org:
         mgmt = org["MasterAccountId"] == me["Account"]
         print(f"  in an AWS Organization; this is {'its management' if mgmt else 'a member'} account")

@@ -12,11 +12,13 @@ CloudFormation stack builds it: a single EC2 instance running LiteLLM, Postgres
 and Caddy (HTTPS) in Docker. It costs about $0.57 a day running and about $5 a
 month stopped, and one command removes it.
 
-**Status: Experimental.** One deployment has been built and tested with this
-template, in an AWS "new experience" account turned into an Organization
-(September 2026). The ordinary case, a classic or organization account where
-the installer has an IAM role or IAM Identity Center access, has not been
-installed yet: treat those steps as **Provisional** and tell the user so. Costs
+**Status: Experimental.** Two deployments have been built and tested with this
+template: one in an AWS "new experience" account turned into an Organization
+(September 2026, us-east-2), and one in a classic standalone account, not in
+an Organization, signed in with `aws login` as an IAM user (October 2026,
+us-west-2). An account inside an Organization where the installer has an IAM
+role or IAM Identity Center access has not been installed yet: treat those
+steps as **Provisional** and tell the user so. Costs
 and the large-workshop runbook are Provisional too; they come from a few hours
 of use, not from a real workshop. Model IDs, prices and versions change: check
 `references/version-matrix.md` and verify in the account rather than trusting
@@ -131,6 +133,12 @@ Security choices and the reasons behind them: `references/security.md`.
   Region.
 - **Ask before creating anything billed**, and before deleting anything.
   Teardown destroys every key and all spend history.
+- **Touch nothing but the gateway, especially in a shared account.** The
+  account often runs other infrastructure (a JupyterHub, a cluster). Set
+  `GATEWAY_ACCOUNT` in `gateway.env`, change AWS only through the bundled
+  scripts (they refuse another account or a stack that is not a gateway),
+  never delete by wildcard, prefix or tag search, and on a hub touch only
+  this gateway's script and `.url` file. See `references/security.md`.
 - **Never test against a gateway people are using.** Deploy a separately named
   stack (its own `GATEWAY_STACK`) and tear it down afterwards.
 

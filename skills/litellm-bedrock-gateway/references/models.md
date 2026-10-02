@@ -30,6 +30,7 @@ does not set `STORE_MODEL_IN_DB`).
 | `claude_code_tier` | `haiku`, `sonnet`, `opus`: which model Claude Code uses for each tier. `haiku` is required when any is set: Claude Code's background calls use it and fail if it is not served. |
 | `input_price`, `output_price` | USD per million tokens, on-demand, in this Region |
 | `price_source` | `litellm` (default for `invoke`) or `config` (default for `converse`) |
+| `cache_write_price`, `cache_write_1h_price`, `cache_read_price` | USD per million tokens for 5-minute cache writes, 1-hour cache writes and cache reads. Required for a `cache: true` model priced in `config`; passed to LiteLLM as `cache_creation_input_token_cost`, `cache_creation_input_token_cost_above_1hr` and `cache_read_input_token_cost`. |
 
 ## Prices decide whether budgets work
 
@@ -39,6 +40,22 @@ and read rates, so `price_source: litellm`. For several open models it had no
 price for us-east-2, or only another Region's; a missing price records **$0 and
 the budget never triggers**. So `converse` models pass `input_price` and
 `output_price` to LiteLLM.
+
+**A Claude model newer than the pinned LiteLLM has no entry in its cost map.**
+Check before adding one: the map for the pinned version is
+`model_prices_and_context_window.json` at that tag in the LiteLLM repository,
+and the key to look for is `us.<bedrock_id>`. On 2026-10-02, LiteLLM 1.102.1
+knew Haiku 4.5 and Fable 5.1 but had no entry at all for Sonnet 5.5 or Opus
+5.5. Such a model needs `price_source: config` and, because a coding agent's
+spend is mostly cache writes and reads, all three cache prices; `render.py`
+refuses a cached config-priced model without them. Take them from the Pricing
+API's regional `standard` usage types (`USW2_cache_write_tokens_standard`,
+`..._1h_standard`, `USW2_cache_read_tokens_standard`, and
+`USW2_input_tokens_standard` / `USW2_output_tokens_standard` for the base
+rates); the `_global_` types are what `global.` profiles pay. Provisional:
+tested on one deployment, where `check_gateway.py --spend` recorded both
+models above $0; whether the cache rates are applied to a real cache-heavy
+session on these two models has not been measured.
 
 Take prices from the **AWS Pricing API**, not from memory or a web page:
 

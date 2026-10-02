@@ -5,10 +5,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source ./gateway.env
+source scripts/guard.sh
 PORT="${GATEWAY_LOCAL_PORT:-4000}"
 
-ID=$(aws cloudformation describe-stacks --stack-name "$GATEWAY_STACK" \
-  --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
+# The right account, and an instance that belongs to this gateway's stack.
+guard_account
+ID=$(guard_instance_id)
 echo "Tunnel: http://localhost:$PORT -> $ID:4000 (Admin UI at /ui; Ctrl-C to close)"
 exec aws ssm start-session --target "$ID" \
   --document-name AWS-StartPortForwardingSession \

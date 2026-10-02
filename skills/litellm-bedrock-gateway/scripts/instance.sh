@@ -10,10 +10,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source ./gateway.env
+source scripts/guard.sh
 : "${GATEWAY_STACK:?set GATEWAY_STACK in gateway.env}"
 
-ID=$(aws cloudformation describe-stacks --stack-name "$GATEWAY_STACK" \
-  --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
+# The right account, and an instance that belongs to this gateway's stack.
+guard_account
+ID=$(guard_instance_id)
 
 on_instance() {
   local cid

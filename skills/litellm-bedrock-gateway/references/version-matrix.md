@@ -14,6 +14,8 @@ Everything here goes stale. Check it before relying on it, and update this file
 | boto3 | `boto3[crt]` (tested 1.43) | 2026-09-25 |
 | Claude Code, OpenCode, Copilot CLI | tested with the versions current on 2026-09-25 (OpenCode 1.18.32, Copilot CLI 1.0.80) | 2026-09-25 |
 | Models and prices | `assets/models.yaml`, us-east-2, Pricing API | 2026-09-25 |
+| Claude models in LiteLLM 1.102.1's cost map | Haiku 4.5, Fable 5.1 present; Sonnet 5.5, Opus 5.5 absent (price them in config, `models.md`) | 2026-10-02 |
+| Claude in us-west-2 | Haiku 4.5, Sonnet 5.5, Opus 5.5 served through `us.` profiles; the 11 shipped IDs all active there | 2026-10-02 |
 | Claude Code prompt size | 34–53k tokens per request | 2026-09-25 |
 
 ## Checking the image digests

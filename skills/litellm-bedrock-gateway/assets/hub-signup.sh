@@ -139,6 +139,9 @@ export ANTHROPIC_AUTH_TOKEN
 # Auto mode would otherwise ask Anthropic's server whether this session is
 # eligible, which a gateway session is not, and pause on a notice until Enter.
 export CLAUDE_CODE_AUTO_MODE_SERVER=0
+# The /model picker otherwise lists only Claude Code's built-in tiers; this
+# adds every model the gateway lets this key use, from its /v1/models list.
+export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1
 # Claude Code picks models by tier; map every tier to a model the gateway serves.
 {{CLAUDE_CODE_EXPORTS}}
 exec claude "$@"
