@@ -143,6 +143,18 @@ Resources:
                 Effect: Allow
                 Action: ssm:GetParameter
                 Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/*
+              # AmazonSSMManagedInstanceCore allows ssm:GetParameter(s) on every
+              # parameter in the account. The instance faces the internet and
+              # may share its account with other infrastructure, so it is
+              # denied every parameter outside its own stack's path.
+              - Sid: DenyOtherParameters
+                Effect: Deny
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                  - ssm:GetParameterHistory
+                NotResource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/*
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile

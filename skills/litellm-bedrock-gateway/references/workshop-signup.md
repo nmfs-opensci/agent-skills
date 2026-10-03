@@ -144,6 +144,15 @@ changing it:
   holds the first checked action until Enter. **Provisional**: Claude Code's
   docs call the variable temporary; recheck after updates. The participant
   quickstart sets it too.
+- It sets `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, so `/model` lists
+  every model the participant's key may use (from LiteLLM's `/v1/models`,
+  which honours a key's `--models` limit), not only Claude Code's built-in
+  tiers. Tested with Claude Code 2.1.287 (2026-10-02): an unrestricted key
+  showed the eight open models below the Claude tiers, a key limited to two
+  models showed one extra. **Provisional**: the picker still shows Claude
+  Code's own entries ("Default", which resolved to Opus, and Fable 5.1, which
+  this gateway does not serve), and a limited key still sees the tier
+  entries it cannot use.
 - On a 2i2c hub, `~/shared` is read-only for users and `~/shared-readwrite` is
   the same folder, writable by admins. Not `~/shared-public`, which on 2i2c
   hubs is normally writable by everyone. Other hubs differ: set

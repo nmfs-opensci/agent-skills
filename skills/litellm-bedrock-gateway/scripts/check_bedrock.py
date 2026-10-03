@@ -29,7 +29,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 HINTS = [
     ("use case details have not been submitted",
-     "submit the Anthropic first-time-use form (see the skill's bedrock-readiness reference)"),
+     "submit the Anthropic first-time-use form (see the skill's bedrock-readiness reference);"
+     " if it was just submitted, retry in 15 minutes"),
     ("not allowed for this account", "account-level block: payment method, or a hold on the account"),
     ("operation not allowed", "account-level block: payment method, or a hold on the account"),
     ("being verified", "new-account verification: wait (usually under 2 hours) and retry"),
@@ -38,6 +39,7 @@ HINTS = [
     ("throttl", "tokens-per-minute quota; request an increase in Service Quotas"),
     ("invalid model identifier", "wrong ID for this Region: check with inspect_account.py"),
     ("on-demand throughput isn", "call it through an inference profile (inference_profile: us)"),
+    ("unable to process your request", "transient on Bedrock's side: retry before diagnosing further"),
 ]
 
 

@@ -36,6 +36,13 @@ In order of preference. None of them writes a long-lived secret to disk.
    printed link on your laptop, sign in, paste the code back). Sessions last up
    to 12 hours. Changing the password of the signed-in identity ends existing
    sessions (`LoginRefreshRequired`); just log in again.
+   Set the profile's Region first (`aws configure set region <region> --profile
+   <name>`). Without one, `aws login` prompts for it, and where stdin is not a
+   terminal (an agent's shell, or a command the user runs through the agent)
+   it fails with `Input is not a terminal` and `[Errno 22] Invalid argument`.
+   An IAM user with a console password can sign in this way, and
+   `get-caller-identity` then shows `:user/<name>`: these are short-term
+   credentials, not access keys.
 3. **An assumed role** from one of the above, via a profile with `role_arn` and
    `source_profile`. Use this to work in a member account from a management
    account login:

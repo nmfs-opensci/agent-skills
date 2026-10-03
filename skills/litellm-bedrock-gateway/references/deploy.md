@@ -29,7 +29,7 @@ metered per request (`costs.md`).
 ## Steps
 
 1. `scripts/init_deployment.sh <folder>` (from the skill), then in that folder:
-   make `.venv` with `scripts/requirements.txt`, edit `gateway.env` (profile,
+   make `.venv` with `scripts/requirements.txt`, edit `gateway.env` (account, profile,
    Region, `GATEWAY_STACK`, `GATEWAY_DOMAIN`, `GATEWAY_ADMIN_UI`) and
    `models.yaml`, and the hub and workshop settings (`workshop-signup.md`).
    Put the folder under version control, usually as the install's own
@@ -37,7 +37,9 @@ metered per request (`costs.md`).
 2. `source gateway.env`, confirm the identity, run `inspect_account.py` and
    `check_bedrock.py` (steps 3–4 of the skill).
 3. **Show the installer what will be created and what it costs, and get a yes.**
-4. `scripts/deploy.sh`. It renders, creates missing secrets, stores the configs,
+4. `scripts/deploy.sh`. It first checks the account (`GATEWAY_ACCOUNT`) and
+   that `GATEWAY_STACK` is free or already a gateway (`security.md`). Then
+   it renders, creates missing secrets, stores the configs,
    deploys the stack (about 3 minutes), writes the install's `docs/` and
    `hub/` (none holds the URL) and saves the URL in `secrets/gateway-url`.
 5. First boot installs Docker and starts the containers: allow 2–3 minutes, then
@@ -50,7 +52,9 @@ metered per request (`costs.md`).
 
 ## Updating
 
-Rerun `scripts/deploy.sh` after any change to `models.yaml` or `gateway.env`.
+Rerun `scripts/deploy.sh` after any change to `models.yaml` or `gateway.env`. On an existing
+stack it prints the change set first and asks for the stack name to be typed
+back if anything would be removed or replaced.
 When the stack already exists it also runs `scripts/instance.sh refresh`, which
 fetches the new LiteLLM config and Caddyfile on the instance and restarts the
 containers. User data runs only at first boot and holds no model details, so the
