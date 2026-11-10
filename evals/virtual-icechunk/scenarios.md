@@ -64,3 +64,10 @@ Give the agent a plan rather than a store:
 Ask, after scenario 3 or 4:
 
 > What did that teach us that we should write down?
+
+## 9. A source behind THREDDS and ERDDAP
+
+> A regional ocean observing system publishes a daily ocean-model forecast
+> through its THREDDS and ERDDAP servers. We'd like a virtual Icechunk store of
+> it on Source Cooperative. Can you find the NetCDF URLs and tell us whether
+> this will work?

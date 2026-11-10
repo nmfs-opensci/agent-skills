@@ -153,3 +153,19 @@ without asking what the native chunking is, is a weak response.
 - Classifies each lesson by scope, and does not promote a single observation to
   a core workflow rule.
 - Does not edit the skill unless asked.
+
+## 9. A source behind THREDDS and ERDDAP
+
+- Distinguishes files from generated responses: proposes no references into an
+  ERDDAP griddap download or a THREDDS OPeNDAP/NCSS URL.
+- Checks the THREDDS catalog for an `HTTPServer` service and tries a ranged
+  `fileServer` request; checks ERDDAP `files/`; reads `sourceUrl` to see what
+  ERDDAP proxies.
+- For a forecast collection, notes that the "best" series is stitched from
+  overlapping runs and asks which run supplies each step.
+- Probes gently: metadata requests, pauses, at most one time step of data.
+- If no files are exposed, says the source cannot be virtualized from outside
+  and names the owner's options (enable `HTTPServer`, copy unchanged files to
+  object storage, republish). Does not offer a temporary endpoint as the
+  reference target.
+- Does not generalize one server's configuration to every THREDDS or ERDDAP.

@@ -109,11 +109,83 @@ If you produce or can republish the source files, their layout is a design
 decision rather than a constraint — see `source-file-design.md`. Fixing the
 chunk grid before publication is the only opportunity to fix it at all.
 
+## THREDDS and ERDDAP: does the server expose files at all?
+
+Most US ocean data sits behind a THREDDS Data Server (TDS), an ERDDAP, or
+both. A virtual reference needs a **file** at a stable URL that honours byte
+ranges. Most of what these servers offer is a **generated response** instead:
+the server reads the file, cuts out the request, and re-encodes it. A generated
+response cannot be referenced, however reliable it looks.
+
+Answer this first, before any parser work. The checks are general, because they
+follow from how the software works. Whether a given server passes them is a
+per-server, often per-dataset, admin setting, so one server's answer says
+nothing about another's.
+
+### THREDDS (TDS)
+
+- **Only the `HTTPServer` service serves files**, at `/thredds/fileServer/...`.
+  OPeNDAP (`/dodsC/`), NCSS (`/ncss/`), WMS, WCS and NcML are generated. Look
+  for a `serviceType="HTTPServer"` entry in the dataset's catalog XML, then make
+  a ranged request against a `fileServer` URL and expect HTTP 206.
+- **Paths can be hidden on purpose.** `/thredds/ncml/<dataset>` returning
+  `location="Not provided because of security concerns."` means the admin hid
+  the file paths. Treat it as a deliberate policy, ask the data owner, and do
+  not try to work around it.
+- **The `.das` shows native chunking before you have a file.** For NetCDF-4
+  sources, `<OPeNDAP URL>.das` lists `_ChunkSizes` per variable. TDS 4.6 did not
+  show compression; check a real file for that.
+- **Forecast collections (FMRC) are not a file list.** The `runs/` catalog
+  lists one virtual dataset per model run, the `files/` catalog (when enabled)
+  lists the real run files, and the "Best" time series is stitched from
+  overlapping runs. A virtual store of the best series must choose which run
+  supplies each step, which is only chunk-aligned when there is one step per
+  chunk. A `files/` catalog that returns 404 means the raw run files are not
+  exposed.
+
+### ERDDAP
+
+- **A griddap download is always generated, so it can never be referenced.**
+  The `.nc` it returns is NetCDF-3 classic, uncompressed, with fixed dimensions.
+  It carries the source's `_ChunkSizes` attribute, which describes nothing in
+  that file.
+- **Variables and units may differ from the source.** Per-dataset
+  configuration can rename coordinates (commonly `lat`/`lon` to
+  `latitude`/`longitude`) and re-encode time (seconds since 1970). Do not infer
+  source names or units from an ERDDAP response.
+- **ERDDAP may be only a proxy.** `NC_GLOBAL:sourceUrl` in
+  `/erddap/info/<datasetID>/index.json` shows what is behind it, often a THREDDS
+  OPeNDAP URL. Then the THREDDS checks above decide.
+- **`/erddap/files/<datasetID>/` is the only route to real files**, and only
+  where the admin enabled it. No virtual store has been built against it yet.
+- ERDDAP's `/info/` and `/search/` JSON are the fastest way to size a dataset:
+  dimensions, lengths, time coverage and variables, in one small request.
+
+### When the answer is no
+
+The source cannot be virtualized from outside, whatever the parser. The options
+are the data owner's to grant: enable `HTTPServer`; copy the unchanged files to
+object storage and virtualize against the copy; or republish reprocessed files
+(`source-file-design.md`). A **temporary** file endpoint is fine for copying
+but never for references: every reference breaks when it is switched off.
+
+Generated services are also slow for bulk transfer, because the server
+re-encodes every response. Do not use their throughput to estimate a plain file
+copy.
+
+Evidence: PacIOOS (`pae-paha.pacioos.hawaii.edu`, ERDDAP 2.29.0 and TDS 4.6),
+probed 2026-11-10. Every check above came back closed there: no `HTTPServer`,
+paths hidden, `files/` 404 on both servers, ERDDAP proxying THREDDS OPeNDAP, and
+about 1 MB/s through either generated service. That is one server's
+configuration. Many THREDDS servers do offer `fileServer`.
+
 ## Sources with no validated example
 
 Do not invent an adapter section for these. Research them fresh, prove them in a
 smoke test, and only then write them down:
 
-- ERDDAP.
+- ERDDAP's `files/` endpoint, and THREDDS `fileServer`, as the source of a
+  built store. The checks above say whether they exist, not that a build
+  against them works.
 - Any browser/WASM read path, for any provider.
 - Signed or expiring source URLs (probably incompatible with virtual references).

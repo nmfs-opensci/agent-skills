@@ -43,7 +43,8 @@ lesson behind an obsolete call is often still valid.
 | "Zarr v3 cannot use consolidated metadata" | It can, as an extension. Icechunk readers pass `consolidated=False`, which is correct here but is not a universal rule |
 | Private patched Icechunk wheel for a destination workaround | Retest on the current release; do not carry a private patch |
 | `pip install -U` at the top of a production notebook | Record a tested environment; the stack has real compatibility floors |
-| Calling any HTTPS source workaround "ERDDAP" or "CORS" | A `User-Agent` fix is source access, not CORS. ERDDAP still has no validated example; real CORS guidance is in `references/browser-access.md` |
+| Calling any HTTPS source workaround "ERDDAP" or "CORS" | A `User-Agent` fix is source access, not CORS. Real CORS guidance is in `references/browser-access.md` |
+| Virtualizing a file downloaded from ERDDAP griddap or THREDDS OPeNDAP/NCSS | Those are generated responses, not the source files. Find out whether the server exposes real files (`source-patterns.md`, "THREDDS and ERDDAP") |
 | Browser reads fail but metadata loads fine | CORS is set on the repository host but not on the source-bytes host. A virtual store needs both. The observed symptom is precise: coordinates render, science arrays do not |
 | "No preflight, so CORS is not the problem" | A single `Range: bytes=a-b` **is** CORS-safelisted, so there may be no preflight at all. What decides is `Access-Control-Allow-Origin` on the ranged GET, from both hosts. Allow `Range` in policies you control anyway, for the requests that do preflight |
 

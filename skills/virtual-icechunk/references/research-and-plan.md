@@ -28,6 +28,12 @@ usually different credentials. Never let one imply the other.
   one cloud region?
 - Are the URLs stable, or do they carry expiring query parameters? Signed URLs
   cannot be stored as virtual references.
+- Does the server give you **files**, or responses it generates on request?
+  THREDDS OPeNDAP/NCSS and ERDDAP griddap are generated and cannot be
+  referenced. Check this before anything else — `source-patterns.md`, "THREDDS
+  and ERDDAP".
+- Probe a public server gently: catalog and metadata requests, pauses between
+  them, and at most one time step of data. It is serving other people.
 
 ## 3. Inspect representative files
 

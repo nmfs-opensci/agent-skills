@@ -35,9 +35,10 @@ Treat everything here as open. Do not present any of it as settled practice.
 
 **Deliberately out of scope for now**
 
-- ERDDAP as a virtual source. No validated example exists. Research it fresh;
-  do not reuse another provider's HTTP workaround and call it an ERDDAP or CORS
-  pattern.
+- ERDDAP's `files/` endpoint and THREDDS `fileServer` as the source of a built
+  store. Whether they *exist* can now be checked (see the 2026-11-10 entry
+  below); no store has been built against either. Do not reuse another
+  provider's HTTP workaround and call it an ERDDAP or CORS pattern.
 - WASM read paths, and parts of browser reading — but the headline has moved. A
   virtual store **has** been rendered end to end in a browser (OA indicators,
   confirmed 2026-09-18), so "nothing has ever rendered" is false and must not be
@@ -69,6 +70,21 @@ Treat everything here as open. Do not present any of it as settled practice.
   repository or beside it.
 - Exhaustive validation versus sampled checks at known transitions.
 - Dependency lock strategy for notebooks meant to stay runnable.
+
+**Settled by the PacIOOS probe, 2026-11-10** (research only, no store built;
+notes in `ocean-icechunks/icechunks` `claude/notes/pacioos-roms.md`; ERDDAP
+2.29.0 and TDS 4.6 at `pae-paha.pacioos.hawaii.edu`)
+
+- ERDDAP griddap output is generated — NetCDF-3 classic, uncompressed, with
+  renamed coordinates and re-encoded time — so it is never a virtual source.
+  This holds for any ERDDAP; it follows from how griddap works.
+- THREDDS serves files only through `HTTPServer`; OPeNDAP and NCSS are
+  generated. A hidden NcML `location` is a deliberate admin policy. The `.das`
+  `_ChunkSizes` attribute shows native chunking without a file.
+- Whether a particular server passes these checks is per-server configuration.
+  PacIOOS failed every one; that does not generalize to other servers.
+- About 1 MB/s through both generated services, measured. It is the cost of
+  server-side re-encoding, not network speed.
 
 **Settled by the OA-indicators build, 2026-09-17** (`ocean-icechunks/icechunks`
 PR #24;
