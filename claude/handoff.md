@@ -56,8 +56,9 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   their history, evals, `docs/` evidence and the five Icechunk notes
   (ocean-icechunks/icechunks#46). Their state, open threads (#21 append
   alignment, HYCOM lessons, the unposted VirtualiZarr issue) and notes are in that
-  repo's `agent/handoff.md`. PR #39 was closed here and reopened there; #21 and #40
-  were transferred there.
+  repo's `agent/handoff.md`. PR #39 was closed here and reopened there as #2. #21 and #40
+  were copied there as ocean-icechunks/ocean-icechunks-skills#3 and #4 (GitHub
+  cannot transfer between orgs); the originals carry a pointer and are still open.
 - This is the **shared skill catalog**, not a working project. Skills live at
   `skills/<name>/`, evaluations separately at `evals/<name>/`. One skill,
   Experimental: `litellm-bedrock-gateway`.
