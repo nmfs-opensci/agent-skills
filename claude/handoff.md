@@ -39,27 +39,6 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   install `nmfs-opensci/agent-coders-gateway` (`~/agent-coders-gateway`,
   deployed before #34) has its update plan in agent-coders-gateway#3: local
   files only, no redeploy; decisions there are Eli's.
-- **Lessons from the HYCOM build are waiting for a Learn pass**, including two places
-  where the skill is wrong (`to_icechunk(encoding=...)` does not exist in VirtualiZarr
-  2.7.3; `chunks={}` breaks down at millions of chunks):
-  [notes/inbound-from-hycom-2026-09.md](notes/inbound-from-hycom-2026-09.md).
-- **In progress: issue #21**, the append pitfall from the CEFI audit. Decisions are
-  made and the failure is verified by running; no skill edits yet. No branch
-  (the empty `issue-21-append-alignment` was deleted 2026-09-25; branch again
-  from `main`). Everything is in
-  [notes/append-alignment-issue-21.md](notes/append-alignment-issue-21.md).
-- **Eli to post the upstream VirtualiZarr issue** (drafted 2026-09-24, not yet posted).
-  The draft and its repro are in `~/tmp/claude-1000/`
-  (`virtualizarr-append-issue.md`, `virtualizarr-append-repro.py`). Read it, then:
-
-  ```bash
-  gh issue create -R zarr-developers/VirtualiZarr \
-    --title "to_icechunk(append_dim=...) silently misplaces data when the existing length isn't a multiple of the chunk size" \
-    --body-file ~/tmp/claude-1000/virtualizarr-append-issue.md
-  ```
-
-  Then give the issue number to the session writing the #21 skill changes, which should
-  cite it.
 - **Also open: #23**, a skill that checks a repo's license, reuse statement and
   citation file (Eli, 2026-09-25). Nothing done.
 - #20 ("LiteLLM") no longer exists here: it was transferred to
@@ -72,16 +51,17 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   `$HOME` and `~/shared` are slow on this JupyterHub. It is about repo-level
   agent guidance (`AGENTS.md`), not about the skill, and nothing has been done
   with it. Ask before acting.
+- **The Icechunk skills moved out on 2026-11-13** to
+  `ocean-icechunks/ocean-icechunks-skills` (`~/ocean-icechunks-skills`), with
+  their history, evals, `docs/` evidence and the five Icechunk notes
+  (ocean-icechunks/icechunks#46). Their state, open threads (#21 append
+  alignment, HYCOM lessons, the unposted VirtualiZarr issue) and notes are in that
+  repo's `agent/handoff.md`. PR #39 was closed here and reopened there as #2. #21 and #40
+  were copied there as ocean-icechunks/ocean-icechunks-skills#3 and #4 (GitHub
+  cannot transfer between orgs); the originals carry a pointer and are still open.
 - This is the **shared skill catalog**, not a working project. Skills live at
-  `skills/<name>/`, evaluations separately at `evals/<name>/`. Two skills, both
-  Experimental: `virtual-icechunk` and `litellm-bedrock-gateway`.
-- `docs/virtual-icechunk-patterns.md` is the prior provisional analysis of the
-  three reference repositories. It is the evidence base the skill was built
-  from — read it before changing the skill's technical claims. It is a snapshot
-  of 2026-09-03 practice, though: for CoastWatch specifically, the live
-  repository `ocean-icechunks/icechunks` (moved from `fish-pace/icechunks` on or
-  before 2026-09-18) and its `claude/notes/` are fresher. The other two,
-  `fish-pace/globcolour-Icechunks` and `fish-pace/pace-icechunks`, did not move.
+  `skills/<name>/`, evaluations separately at `evals/<name>/`. One skill,
+  Experimental: `litellm-bedrock-gateway`.
 - This file is loaded automatically at session start by a `SessionStart` hook
   (`~/claude-config/claude/hooks/load-repo-handoff.py`), which also lists the
   filenames in `claude/notes/`. Project memory for this repo lives in
@@ -104,21 +84,6 @@ Rolling index of session state. Keep this lean — a pointer to topic notes in
   record — put the real reasoning in the issue and PR body.
 - Never modify production Icechunk stores, datasets, or object storage while
   validating a skill.
-
-## What the skill has been through
-
-**`skills/virtual-icechunk/` has been used on a real build.** It was written
-without live testing (2026-09-03), but `ocean-icechunks/icechunks` has since adopted
-it: that repository's `CLAUDE.md` names it as the authority to prefer over
-re-deriving practice from its own notebooks, and the OA-indicators store was
-built under it on 2026-09-17. So it is no longer unproven — though "used" is
-not "systematically evaluated", and the eval scenarios in `evals/` have still
-only ever been dry-run on paper.
-
-**The evidence from real builds lives in the other repository**, not here:
-`~/icechunks/claude/notes/oa-indicators.md` and `.../viewers.md` are where a
-build's lessons get written down first. Harvesting them into the skill is a
-deliberate step that has happened once (PR #13) and will need doing again.
 
 ## Recent work
 
@@ -168,8 +133,8 @@ deliberate step that has happened once (PR #13) and will need doing again.
   team is new to Agent Skills.
 - **2026-09-03 — `virtual-icechunk` installed as a personal skill** on this hub:
   `~/.claude/skills/virtual-icechunk` → `~/.agents/skills/virtual-icechunk` →
-  `/home/jovyan/agent-skills/skills/virtual-icechunk`. A `git pull` here updates
-  it everywhere; it is available in every repo on this machine.
+  `/home/jovyan/agent-skills/skills/virtual-icechunk`. *Since 2026-11-13 the
+  link points at `~/ocean-icechunks-skills/skills/virtual-icechunk` instead.*
 - **2026-09-03 — session tooling moved into `~/claude-config`** (that repo, not
   this one): the handoff-loading hook, the `claude/handoff.md` + `claude/notes/`
   convention, and Eli's phrase routines ("I am about to clear", "this task is
@@ -180,27 +145,6 @@ deliberate step that has happened once (PR #13) and will need doing again.
 
 Not a task list — context for whatever comes up. Ask before acting on any of it.
 
-- **Formats beyond NetCDF/HDF5 — Eli will do this later, deliberately not now**
-  (decided 2026-09-18). The skill's scope and `description` stay as they are.
-  The dossier for that work — parsers, packages, current versions, the layout
-  decision, and what each format needs before it counts as guidance — is in
-  [notes/expanding-format-coverage.md](notes/expanding-format-coverage.md).
-  Do not start it unasked.
-- **FMRC (forecast model run collections)** is still undecided, and is the other
-  half of the same question: most real GRIB is forecast output, so the two will
-  probably arrive together. earth-mover's `FMRC.md` is the strongest single
-  document in their repo and the skill has nothing on it.
-- The evals have never been executed. earth-mover has a runnable harness that
-  would largely port — the mechanism and the metric list are in
-  [notes/earth-mover-comparison.md](notes/earth-mover-comparison.md). Not
-  started, and their own harness has not had a live run either.
-- Topics still deliberately left out of the skill, each recorded in
-  `references/learn-and-evolve.md`: ERDDAP as a virtual source (no validated
-  example); WASM read paths and browser rendering from a GCS source
-  specifically; Arraylake and non-Source-Cooperative destinations; automated
-  incremental updates; the PACE HTTPS-vs-in-region decision; dependency lock
-  strategy. Each needs a real example before it becomes guidance. Browser
-  rendering in general has left this list — see PR #13.
 - `AGENTS.md` says keep the repo agent-independent; a committed `claude/`
   directory sits in mild tension with that. Flagged for Eli, undecided.
 - The catalog has room for more skills; nothing is queued.
@@ -213,11 +157,3 @@ Not a task list — context for whatever comes up. Ask before acting on any of i
 - [litellm-gateway-template.md](notes/litellm-gateway-template.md) — the
   install template repo: Eli's direction, why it has no `claude/` or
   `.gitignore`, what is tested
-- [append-alignment-issue-21.md](notes/append-alignment-issue-21.md) — #21 decisions,
-  the verified repro, and why VirtualiZarr's append misplaces data
-- [virtual-icechunk-skill.md](notes/virtual-icechunk-skill.md) — why the skill
-  is shaped the way it is, and its testing status
-- [expanding-format-coverage.md](notes/expanding-format-coverage.md) — GRIB,
-  TIFF and Zarr: where the material is, for the later widening
-- [earth-mover-comparison.md](notes/earth-mover-comparison.md) — how the
-  vendor's skill compares, what was taken, what to port next

@@ -10,10 +10,16 @@ across repositories and GitHub organizations.
 | Skill | Description | Status | Maintainer |
 | --- | --- | --- | --- |
 | [litellm-bedrock-gateway](skills/litellm-bedrock-gateway/) | Deploy, verify, run, and tear down a LiteLLM gateway on AWS so workshop participants can use coding agents with Amazon Bedrock models through personal keys with budgets and expiry. | Experimental | [@eeholmes](https://github.com/eeholmes) |
-| [virtual-icechunk](skills/virtual-icechunk/) | Research, build, validate, document, and audit virtual Icechunk stores that reference remote NetCDF/HDF5 files in place. | Experimental | [@eeholmes](https://github.com/eeholmes) |
 
 A skill is added to this table only when its directory and valid `SKILL.md`
 exist.
+
+**Moved:** the Icechunk skills, `virtual-icechunk` and the planned
+`archive-to-cloud`, now live in
+[ocean-icechunks/ocean-icechunks-skills](https://github.com/ocean-icechunks/ocean-icechunks-skills),
+with their history ([ocean-icechunks/icechunks#46](https://github.com/ocean-icechunks/icechunks/issues/46)).
+If you linked `~/agent-skills/skills/virtual-icechunk` into your agent, clone
+that repository and link `skills/virtual-icechunk` from it instead.
 
 Maturity levels:
 
@@ -56,14 +62,14 @@ that skill's guidance for the rest of the task.
 So the way to use one is to **describe the task in plain language**:
 
 ```text
-Build a virtual Icechunk store for these NOAA files on Source Cooperative
-Why is this store so slow to open?
-Review this older repository and tell me what to modernize
+Set up a gateway so our workshop can use Claude Code through Bedrock
+Make keys for 30 participants that expire on Friday
+Why does Bedrock refuse this model?
 ```
 
 You do not need to name the skill. If it does not activate on its own, most
 agents let you invoke it explicitly by name as a slash command, such as
-`/virtual-icechunk`.
+`/litellm-bedrock-gateway`.
 
 ### Install one
 
